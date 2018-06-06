@@ -1,0 +1,10 @@
+name: HeroStackDrops
+version: 1.5.0
+author: Heroslender
+main: com.heroslender.StackDrops
+
+commands:
+  stackdrops:
+     description: Comando principal do HeroStackDrops.
+     usage: Brevemente disponivel
+#     usage: §c/<command> <reload>

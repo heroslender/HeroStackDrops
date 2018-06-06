@@ -1,0 +1,30 @@
+# #==========================================================================
+# |
+# |  HeroStackDrops by Heroslender
+# |  Site: http://heroslender.cf/plugins/HeroStackDrops/
+# |
+# #==========================================================================
+# |
+# | Restringir os itens que irao juntar no chao
+# |
+# | Nao tem suporte para data, so material mesmo
+# | Talvez na proxima update coloque para data tambem
+# |
+# | Metodos disponiveis disponiveis:
+# | WHITELIST - Apenas os itens listados aqui irao juntar
+# | BLACKLIST - Todos os itens irao juntar menos os que se encontram aqui
+# | DESATIVADO - Nao filtra os itens
+# |
+# | Itens sao os materiais dos itens que podem ou nao juntar
+# |
+# #==========================================================================
+restringir-itens:
+  metodo: 'WHITELIST'
+  itens:
+    - 'INK_SACK'
+    - 'COAL'
+    - 'COBBLESTONE'
+    - 'REDSTONE'
+holograma:
+  ativado: true
+  texto: '&7{quantidade}x &e{nome}'
