@@ -13,10 +13,11 @@ import java.lang.reflect.Method;
 /**
  * Created by Heroslender.
  */
-public class NMS {
+class NMS {
     private static Field handleField;
     private static Method getItemMethod;
     private static Method itemGetNameMethod;
+    private static Field itemAge;
 
     static {
         try {
@@ -27,6 +28,15 @@ public class NMS {
             getItemMethod = itemStack.getDeclaredMethod("getItem");
             itemGetNameMethod = getNMSClass("Item").getDeclaredMethod("a", itemStack);
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static {
+        try {
+            itemAge = getNMSClass("EntityItem").getDeclaredField("age");
+            itemAge.setAccessible(true);
+        } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
     }
@@ -61,11 +71,7 @@ public class NMS {
                 if (loc.distanceSquared(target.getLocation()) < 100) {
                     sendPacket(target, p);
                     sendPacket(target, data);
-//                    try {
                     sendPacket(target, playAnim);
-//                    } catch (Exception er) {
-//                        sendPacket(target, playAnim112);
-//                    }
                 }
             }
         } catch (Exception ex) {
@@ -76,7 +82,7 @@ public class NMS {
     static void resetDespawnDelay(Item item) {
         try {
             Object entityItem = item.getClass().getMethod("getHandle").invoke(item);
-            entityItem.getClass().getMethod("j").invoke(entityItem);
+            itemAge.set(entityItem, 10);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -96,7 +102,6 @@ public class NMS {
         if (itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName())
             return itemStack.getItemMeta().getDisplayName();
         try {
-            Bukkit.getLogger().info(itemStack.getClass().getName());
             Object handle = handleField.get(itemStack);
             return (String) itemGetNameMethod.invoke(getItemMethod.invoke(handle), handle);
         } catch (IllegalAccessException | InvocationTargetException e) {
