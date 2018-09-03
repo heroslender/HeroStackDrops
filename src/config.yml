@@ -2,6 +2,7 @@
 # |
 # |  HeroStackDrops by Heroslender
 # |  Site: http://heroslender.cf/plugins/HeroStackDrops/
+# |  Discord: http://heroslender.cf/discord
 # |
 # #==========================================================================
 # |
@@ -28,3 +29,4 @@ restringir-itens:
 holograma:
   ativado: true
   texto: '&7{quantidade}x &e{nome}'
+raio-de-stack: 5

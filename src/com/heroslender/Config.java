@@ -12,6 +12,7 @@ public class Config {
     private StackDrops.Metodo method;
     private List<Material> itens;
     private String itemName;
+    private Double stackRadius;
 
     Config(StackDrops stackDrops) {
         this.stackDrops = stackDrops;
@@ -27,6 +28,7 @@ public class Config {
         addDefault("restringir-itens.itens", Arrays.asList("STONE", "DIRT"));
         addDefault("holograma.ativado", true);
         addDefault("holograma.texto", "&7{quantidade}x &e{nome}");
+        addDefault("raio-de-stack", 5);
     }
 
     private void loadConfig() {
@@ -56,6 +58,8 @@ public class Config {
         itemName = stackDrops.getConfig().getBoolean("holograma.ativado", true)
                 ? stackDrops.getConfig().getString("holograma.texto", "&7{quantidade}x &e{nome}").replace('&', '§')
                 : null;
+
+        stackRadius = stackDrops.getConfig().getDouble("raio-de-stack", 5D);
     }
 
     public StackDrops.Metodo getMethod() {
@@ -68,6 +72,10 @@ public class Config {
 
     public String getItemName() {
         return itemName;
+    }
+
+    public Double getStackRadius() {
+        return stackRadius;
     }
 
     private void addDefault(String path, Object value) {

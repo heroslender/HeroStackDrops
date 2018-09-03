@@ -51,7 +51,7 @@ public class StackDrops extends JavaPlugin implements Listener {
                 || (config.getMethod() == Metodo.WHITELIST && !config.getItens().contains(itemStack.getType())))
             return;
 
-        for (Entity entity : item.getNearbyEntities(5D, 5D, 5D)) {
+        for (Entity entity : item.getNearbyEntities(config.getStackRadius(), config.getStackRadius(), config.getStackRadius())) {
             if (entity instanceof Item) {
                 Item targetItem = (Item) entity;
                 if (targetItem.hasMetadata(META_KEY) && targetItem.getItemStack().isSimilar(itemStack)) {
