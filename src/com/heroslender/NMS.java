@@ -9,6 +9,7 @@ import org.bukkit.inventory.ItemStack;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.logging.Level;
 
 /**
  * Created by Heroslender.
@@ -27,8 +28,8 @@ class NMS {
             Class<?> itemStack = getNMSClass("ItemStack");
             getItemMethod = itemStack.getDeclaredMethod("getItem");
             itemGetNameMethod = getNMSClass("Item").getDeclaredMethod("a", itemStack);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception error) {
+            StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar as variaveis de pegar o nome do ItemStack em NMS", error);
         }
     }
 
@@ -36,12 +37,12 @@ class NMS {
         try {
             itemAge = getNMSClass("EntityItem").getDeclaredField("age");
             itemAge.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
+        } catch (NoSuchFieldException error) {
+            StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar a variavel de resetar a idade do ItemStack em NMS", error);
         }
     }
 
-    static void displayCollectItem(Player player, Item item) {
+    static void displayCollectItem(final Player player, final Item item) {
         try {
             Object entityItem = getNMSClass("EntityItem").getConstructor(getNMSClass("World"), double.class, double.class, double.class, getNMSClass("ItemStack"))
                     .newInstance(getOBCClass("CraftWorld").getMethod("getHandle").invoke(getOBCClass("CraftWorld").cast(item.getWorld())),
@@ -74,58 +75,58 @@ class NMS {
                     sendPacket(target, playAnim);
                 }
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception error) {
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao aprensentar a animação de coletar o ItemStack em NMS", error);
         }
     }
 
-    static void resetDespawnDelay(Item item) {
+    static void resetDespawnDelay(final Item item) {
         try {
             Object entityItem = item.getClass().getMethod("getHandle").invoke(item);
             itemAge.set(entityItem, 10);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception error) {
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao resetar a idade do ItemStack em NMS", error);
         }
     }
 
-    private static void sendPacket(Player player, Object packet) {
+    private static void sendPacket(final Player player, final Object packet) {
         try {
             Object handle = player.getClass().getMethod("getHandle").invoke(player);
             Object playerConnection = handle.getClass().getField("playerConnection").get(handle);
             playerConnection.getClass().getMethod("sendPacket", getNMSClass("Packet")).invoke(playerConnection, packet);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception error) {
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao tacar o packet no player", error);
         }
     }
 
-    static String getNome(ItemStack itemStack) {
+    static String getNome(final ItemStack itemStack) {
         if (itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName())
             return itemStack.getItemMeta().getDisplayName();
         try {
             Object handle = handleField.get(itemStack);
             return (String) itemGetNameMethod.invoke(getItemMethod.invoke(handle), handle);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
+        } catch (IllegalAccessException | InvocationTargetException error) {
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar o nome do ItemStack em NMS", error);
         }
         return itemStack.getType().name().replace('_', ' ').toLowerCase();
     }
 
-    private static Class<?> getOBCClass(String name) {
+    private static Class<?> getOBCClass(final String name) {
         String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         try {
             return Class.forName("org.bukkit.craftbukkit." + version + "." + name);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException error) {
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar a classe '" + name + "' do CraftBukkit", error);
             return null;
         }
     }
 
-    private static Class<?> getNMSClass(String name) {
+    private static Class<?> getNMSClass(final String name) {
         String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         try {
             return Class.forName("net.minecraft.server." + version + "." + name);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException error) {
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar a classe '" + name + "' do NMS", error);
             return null;
         }
     }

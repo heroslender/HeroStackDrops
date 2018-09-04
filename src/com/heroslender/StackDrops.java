@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.event.inventory.InventoryType;
@@ -27,9 +28,11 @@ import java.util.logging.Level;
 public class StackDrops extends JavaPlugin implements Listener {
     private static final String META_KEY = "heroQuant";
 
+    private static StackDrops instance;
     private final Config config;
 
     public StackDrops() {
+        instance = this;
         saveDefaultConfig();
         config = new Config(this);
     }
@@ -40,7 +43,7 @@ public class StackDrops extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onItemSpawn(ItemSpawnEvent e) {
+    private void onItemSpawn(final ItemSpawnEvent e) {
         if (e.isCancelled())
             return;
 
@@ -67,8 +70,46 @@ public class StackDrops extends JavaPlugin implements Listener {
         updateItem(item, itemStack.getAmount());
     }
 
+    /**
+     * Quando 2 itens ja dropados se juntam, atualizar a quantidade de um e remover o outro
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    private void onItemMerge(final ItemMergeEvent e) {
+        Item originalItem = e.getEntity();
+        Item targetItem = e.getTarget();
+        if (originalItem.hasMetadata(META_KEY)) {
+            int targetQuantidade = targetItem.hasMetadata(META_KEY) ? targetItem.getMetadata(META_KEY).get(0).asInt() : targetItem.getItemStack().getAmount();
+            targetQuantidade += originalItem.getMetadata(META_KEY).get(0).asInt();
+
+
+            updateItem(targetItem, targetQuantidade);
+            NMS.resetDespawnDelay(targetItem);
+            originalItem.remove();
+            e.setCancelled(true);
+        } else if (targetItem.hasMetadata(META_KEY)){
+            int originalQuantidade = targetItem.getMetadata(META_KEY).get(0).asInt() + originalItem.getItemStack().getAmount();
+
+            updateItem(targetItem, originalQuantidade);
+            NMS.resetDespawnDelay(targetItem);
+            originalItem.remove();
+            e.setCancelled(true);
+        } else {
+            // Se nenhum dos itens tinha a metadata, verificamos se podem juntar
+            if ((config.getMethod() == Metodo.BLACKLIST && config.getItens().contains(originalItem.getItemStack().getType()))
+                    || (config.getMethod() == Metodo.WHITELIST && !config.getItens().contains(originalItem.getItemStack().getType())))
+                return;
+
+            int quantidade = originalItem.getItemStack().getAmount() + targetItem.getItemStack().getAmount();
+
+            updateItem(originalItem, quantidade);
+            NMS.resetDespawnDelay(originalItem);
+            targetItem.remove();
+            e.setCancelled(true);
+        }
+    }
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onPlayerPickup(PlayerPickupItemEvent e) {
+    public void onPlayerPickup(final PlayerPickupItemEvent e) {
         e.setCancelled(
                 performPickup(
                         e.getItem(),
@@ -79,7 +120,7 @@ public class StackDrops extends JavaPlugin implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onHopperPickup(InventoryPickupItemEvent e) {
+    private void onHopperPickup(final InventoryPickupItemEvent e) {
         if (!e.getInventory().getType().equals(InventoryType.HOPPER))
             return;
 
@@ -92,7 +133,7 @@ public class StackDrops extends JavaPlugin implements Listener {
         );
     }
 
-    private boolean performPickup(Item item, Inventory inventory, @Nullable Player player) {
+    private boolean performPickup(final Item item, final Inventory inventory, @Nullable final Player player) {
         if (!item.hasMetadata(META_KEY)) return false;
 
         int quant = item.getMetadata(META_KEY).get(0).asInt();
@@ -119,7 +160,7 @@ public class StackDrops extends JavaPlugin implements Listener {
         return true;
     }
 
-    private void updateItem(Item item, int quantidade) {
+    private void updateItem(final Item item, final int quantidade) {
         // Atualizar a MetaData do Item
         item.setMetadata(META_KEY, new FixedMetadataValue(this, quantidade));
         // Defenir o holograma no Item
@@ -132,7 +173,7 @@ public class StackDrops extends JavaPlugin implements Listener {
         }
     }
 
-    private void collectItem(Player player, Item item) {
+    private void collectItem(final Player player, final Item item) {
         try {
             NMS.displayCollectItem(player, item);
             try {
@@ -152,6 +193,10 @@ public class StackDrops extends JavaPlugin implements Listener {
             // apenas efeito visual
             getLogger().log(Level.WARNING, "Ocurreu um erro ao amostrar a animação/som de coletar.", e);
         }
+    }
+
+    public static StackDrops getInstance() {
+        return instance;
     }
 
     enum Metodo {
