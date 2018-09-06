@@ -23,7 +23,7 @@ public class Config {
         loadConfig();
     }
 
-    private void verifyConfig() {
+    public void verifyConfig() {
         addDefault("restringir-itens.method", "DESATIVADO");
         addDefault("restringir-itens.itens", Arrays.asList("STONE", "DIRT"));
         addDefault("holograma.ativado", true);
@@ -31,7 +31,7 @@ public class Config {
         addDefault("raio-de-stack", 5);
     }
 
-    private void loadConfig() {
+    public void loadConfig() {
         itens.clear();
 
         switch (stackDrops.getConfig().getString("restringir-itens.method", "DESATIVADO").toLowerCase()) {
@@ -50,7 +50,7 @@ public class Config {
             for (String s : stackDrops.getConfig().getStringList("restringir-itens.itens")) {
                 try {
                     itens.add(Material.valueOf(s));
-                } catch (NoSuchFieldError e) {
+                } catch (IllegalArgumentException e) {
                     stackDrops.getLogger().warning("O material '" + s + "' nao existe!");
                 }
             }

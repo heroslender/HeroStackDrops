@@ -2,6 +2,8 @@ package com.heroslender;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -39,6 +41,17 @@ class NMS {
             itemAge.setAccessible(true);
         } catch (NoSuchFieldException error) {
             StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar a variavel de resetar a idade do ItemStack em NMS", error);
+        }
+    }
+
+    static void registerCommand(Command command){
+        try {
+            Object craftServer = getOBCClass("CraftServer").cast(Bukkit.getServer());
+            Object commandMap = craftServer.getClass().getMethod("getCommandMap").invoke(craftServer);
+
+            commandMap.getClass().getMethod("register", String.class, Command.class).invoke(commandMap, StackDrops.getInstance().getDescription().getName(), command);
+        } catch (Exception error) {
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao registar o comando", error);
         }
     }
 

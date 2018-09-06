@@ -1,5 +1,6 @@
 package com.heroslender;
 
+import com.heroslender.command.CommandStackdrops;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -24,7 +25,6 @@ import java.util.logging.Level;
 /**
  * Created by Heroslender.
  */
-// TODO - adicionar comando para reiniciar a config :)
 public class StackDrops extends JavaPlugin implements Listener {
     private static final String META_KEY = "heroQuant";
 
@@ -40,6 +40,7 @@ public class StackDrops extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
+        NMS.registerCommand(new CommandStackdrops());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -197,6 +198,10 @@ public class StackDrops extends JavaPlugin implements Listener {
 
     public static StackDrops getInstance() {
         return instance;
+    }
+
+    public Config getConfiguration() {
+        return config;
     }
 
     enum Metodo {
