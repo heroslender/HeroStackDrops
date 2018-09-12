@@ -1,6 +1,7 @@
-package com.heroslender;
+package com.heroslender.herostackdrops;
 
-import com.heroslender.command.CommandStackdrops;
+import com.heroslender.herostackdrops.command.CommandStackdrops;
+import com.heroslender.herostackdrops.nms.NMS;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -57,16 +58,18 @@ public class StackDrops extends JavaPlugin implements Listener {
 
         if (!config.isItemAllowed(itemStack)) return;
 
-        for (Entity entity : item.getNearbyEntities(config.getStackRadius(), config.getStackRadius(), config.getStackRadius())) {
-            if (entity instanceof Item) {
-                Item targetItem = (Item) entity;
-                if (targetItem.hasMetadata(META_KEY) && targetItem.getItemStack().isSimilar(itemStack)) {
-                    e.setCancelled(true);
-                    int quant = targetItem.getMetadata(META_KEY).get(0).asInt() + itemStack.getAmount();
-                    updateItem(targetItem, quant);
-                    // Resetar a idade do item, para ele nao dar despawn rapidamente
-                    NMS.resetDespawnDelay(targetItem);
-                    return;
+        if (config.getStackOnSpawn()) {
+            for (Entity entity : item.getNearbyEntities(config.getStackRadius(), config.getStackRadius(), config.getStackRadius())) {
+                if (entity instanceof Item) {
+                    Item targetItem = (Item) entity;
+                    if (targetItem.hasMetadata(META_KEY) && targetItem.getItemStack().isSimilar(itemStack)) {
+                        e.setCancelled(true);
+                        int quant = targetItem.getMetadata(META_KEY).get(0).asInt() + itemStack.getAmount();
+                        updateItem(targetItem, quant);
+                        // Resetar a idade do item, para ele nao dar despawn rapidamente
+                        NMS.resetDespawnDelay(targetItem);
+                        return;
+                    }
                 }
             }
         }
@@ -173,9 +176,8 @@ public class StackDrops extends JavaPlugin implements Listener {
                 }
             }
         } catch (Exception e) {
-            // Apanhar todas as exceçoes para nao travar a execuçao do parent,
-            // ate porque este não é um metodo muito importante, é
-            // apenas efeito visual
+            // Apanhar todas as exceçoes para nao travar a execuçao do parent, ate
+            // porque este não é um metodo muito importante, é apenas efeito visual.
             getLogger().log(Level.WARNING, "Ocurreu um erro ao amostrar a animação/som de coletar.", e);
         }
     }

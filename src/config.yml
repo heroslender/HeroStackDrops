@@ -18,9 +18,18 @@
 # |
 # | Itens sao os materiais dos itens que podem ou nao juntar
 # |
+# |    -> stack-on-spawn <-
+# | Esta opção é para caso deseje que os itens se juntem direto
+# | com outros itens por perto, não amostrando, assim, a animação
+# | de dropar o item
+# |
+# |    -> raio-de-stack <-
+# | Caso a opção `stack-on-spawn` esteja ativada, qual seria o raio
+# | para procurar por itens para juntar
+# |
 # #==========================================================================
 restringir-itens:
-  metodo: 'WHITELIST'
+  method: 'WHITELIST'
   itens:
     - 'INK_SACK'
     - 'COAL'
@@ -29,4 +38,5 @@ restringir-itens:
 holograma:
   ativado: true
   texto: '&7{quantidade}x &e{nome}'
+stack-on-spawn: false
 raio-de-stack: 5

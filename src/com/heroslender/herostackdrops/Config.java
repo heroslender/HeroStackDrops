@@ -1,4 +1,4 @@
-package com.heroslender;
+package com.heroslender.herostackdrops;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -12,12 +12,14 @@ public class Config {
     private final List<Material> itens;
     private final String itemName;
     private final Double stackRadius;
+    private final Boolean stackOnSpawn;
 
     Config(StackDrops stackDrops) {
         addDefault("restringir-itens.method", "DESATIVADO");
         addDefault("restringir-itens.itens", Arrays.asList("STONE", "DIRT"));
         addDefault("holograma.ativado", true);
         addDefault("holograma.texto", "&7{quantidade}x &e{nome}");
+        addDefault("stack-on-spawn", false);
         addDefault("raio-de-stack", 5);
 
         System.out.println(stackDrops.getConfig().getString("restringir-itens.method", "nulo").toLowerCase());
@@ -47,17 +49,14 @@ public class Config {
                 ? stackDrops.getConfig().getString("holograma.texto", "&7{quantidade}x &e{nome}").replace('&', '§')
                 : null;
 
+        stackOnSpawn = stackDrops.getConfig().getBoolean("stack-on-spawn", false);
         stackRadius = stackDrops.getConfig().getDouble("raio-de-stack", 5D);
     }
 
     public Boolean isItemAllowed(final ItemStack itemStack) {
-        return (getMethod() == StackDrops.Metodo.BLACKLIST && !itens.contains(itemStack.getType()))
-                || (getMethod() == StackDrops.Metodo.WHITELIST && itens.contains(itemStack.getType()))
-                || getMethod() == StackDrops.Metodo.DESATIVADO;
-    }
-
-    public StackDrops.Metodo getMethod() {
-        return method;
+        return (method == StackDrops.Metodo.BLACKLIST && !itens.contains(itemStack.getType()))
+                || (method == StackDrops.Metodo.WHITELIST && itens.contains(itemStack.getType()))
+                || method == StackDrops.Metodo.DESATIVADO;
     }
 
     public String getItemName() {
@@ -66,6 +65,10 @@ public class Config {
 
     public Double getStackRadius() {
         return stackRadius;
+    }
+
+    public Boolean getStackOnSpawn() {
+        return stackOnSpawn;
     }
 
     private void addDefault(String path, Object value) {
