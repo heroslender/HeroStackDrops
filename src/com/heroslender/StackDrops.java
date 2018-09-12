@@ -29,12 +29,16 @@ public class StackDrops extends JavaPlugin implements Listener {
     private static final String META_KEY = "heroQuant";
 
     private static StackDrops instance;
-    private final Config config;
+    private Config config;
 
     public StackDrops() {
         instance = this;
         saveDefaultConfig();
         config = new Config(this);
+    }
+
+    public static StackDrops getInstance() {
+        return instance;
     }
 
     @Override
@@ -51,9 +55,7 @@ public class StackDrops extends JavaPlugin implements Listener {
         Item item = e.getEntity();
         ItemStack itemStack = item.getItemStack();
 
-        if ((config.getMethod() == Metodo.BLACKLIST && config.getItens().contains(itemStack.getType()))
-                || (config.getMethod() == Metodo.WHITELIST && !config.getItens().contains(itemStack.getType())))
-            return;
+        if (!config.isItemAllowed(itemStack)) return;
 
         for (Entity entity : item.getNearbyEntities(config.getStackRadius(), config.getStackRadius(), config.getStackRadius())) {
             if (entity instanceof Item) {
@@ -78,35 +80,15 @@ public class StackDrops extends JavaPlugin implements Listener {
     private void onItemMerge(final ItemMergeEvent e) {
         Item originalItem = e.getEntity();
         Item targetItem = e.getTarget();
-        if (originalItem.hasMetadata(META_KEY)) {
-            int targetQuantidade = targetItem.hasMetadata(META_KEY) ? targetItem.getMetadata(META_KEY).get(0).asInt() : targetItem.getItemStack().getAmount();
-            targetQuantidade += originalItem.getMetadata(META_KEY).get(0).asInt();
+        if (!targetItem.hasMetadata(META_KEY) && !originalItem.hasMetadata(META_KEY) && !config.isItemAllowed(originalItem.getItemStack()))
+            return;
 
-
-            updateItem(targetItem, targetQuantidade);
-            NMS.resetDespawnDelay(targetItem);
-            originalItem.remove();
-            e.setCancelled(true);
-        } else if (targetItem.hasMetadata(META_KEY)){
-            int originalQuantidade = targetItem.getMetadata(META_KEY).get(0).asInt() + originalItem.getItemStack().getAmount();
-
-            updateItem(targetItem, originalQuantidade);
-            NMS.resetDespawnDelay(targetItem);
-            originalItem.remove();
-            e.setCancelled(true);
-        } else {
-            // Se nenhum dos itens tinha a metadata, verificamos se podem juntar
-            if ((config.getMethod() == Metodo.BLACKLIST && config.getItens().contains(originalItem.getItemStack().getType()))
-                    || (config.getMethod() == Metodo.WHITELIST && !config.getItens().contains(originalItem.getItemStack().getType())))
-                return;
-
-            int quantidade = originalItem.getItemStack().getAmount() + targetItem.getItemStack().getAmount();
-
-            updateItem(originalItem, quantidade);
-            NMS.resetDespawnDelay(originalItem);
-            targetItem.remove();
-            e.setCancelled(true);
-        }
+        int targetQuantidade = targetItem.hasMetadata(META_KEY) ? targetItem.getMetadata(META_KEY).get(0).asInt() : targetItem.getItemStack().getAmount();
+        int originalQuantidade = originalItem.hasMetadata(META_KEY) ? originalItem.getMetadata(META_KEY).get(0).asInt() : originalItem.getItemStack().getAmount();
+        updateItem(targetItem, targetQuantidade + originalQuantidade);
+        NMS.resetDespawnDelay(targetItem);
+        originalItem.remove();
+        e.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -164,6 +146,8 @@ public class StackDrops extends JavaPlugin implements Listener {
     private void updateItem(final Item item, final int quantidade) {
         // Atualizar a MetaData do Item
         item.setMetadata(META_KEY, new FixedMetadataValue(this, quantidade));
+        // Alterar a quantiade para 1, permitindo assim juntar com outros packs
+        item.getItemStack().setAmount(1);
         // Defenir o holograma no Item
         if (config.getItemName() != null) {
             item.setCustomName(config.getItemName()
@@ -196,12 +180,9 @@ public class StackDrops extends JavaPlugin implements Listener {
         }
     }
 
-    public static StackDrops getInstance() {
-        return instance;
-    }
-
-    public Config getConfiguration() {
-        return config;
+    public void reloadConfiguration() {
+        reloadConfig();
+        config = new Config(this);
     }
 
     enum Metodo {

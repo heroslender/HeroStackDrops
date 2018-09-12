@@ -1,39 +1,26 @@
 package com.heroslender;
 
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class Config {
-    private final StackDrops stackDrops;
-
-    private StackDrops.Metodo method;
-    private List<Material> itens;
-    private String itemName;
-    private Double stackRadius;
+    private final StackDrops.Metodo method;
+    private final List<Material> itens;
+    private final String itemName;
+    private final Double stackRadius;
 
     Config(StackDrops stackDrops) {
-        this.stackDrops = stackDrops;
-
-        itens = new ArrayList<>();
-
-        verifyConfig();
-        loadConfig();
-    }
-
-    public void verifyConfig() {
         addDefault("restringir-itens.method", "DESATIVADO");
         addDefault("restringir-itens.itens", Arrays.asList("STONE", "DIRT"));
         addDefault("holograma.ativado", true);
         addDefault("holograma.texto", "&7{quantidade}x &e{nome}");
         addDefault("raio-de-stack", 5);
-    }
 
-    public void loadConfig() {
-        itens.clear();
-
+        System.out.println(stackDrops.getConfig().getString("restringir-itens.method", "nulo").toLowerCase());
         switch (stackDrops.getConfig().getString("restringir-itens.method", "DESATIVADO").toLowerCase()) {
             case "whitelist":
                 method = StackDrops.Metodo.WHITELIST;
@@ -46,6 +33,7 @@ public class Config {
                 break;
         }
 
+        itens = new ArrayList<>();
         if (stackDrops.getConfig().contains("restringir-itens.itens"))
             for (String s : stackDrops.getConfig().getStringList("restringir-itens.itens")) {
                 try {
@@ -62,12 +50,14 @@ public class Config {
         stackRadius = stackDrops.getConfig().getDouble("raio-de-stack", 5D);
     }
 
-    public StackDrops.Metodo getMethod() {
-        return method;
+    public Boolean isItemAllowed(final ItemStack itemStack) {
+        return (getMethod() == StackDrops.Metodo.BLACKLIST && !itens.contains(itemStack.getType()))
+                || (getMethod() == StackDrops.Metodo.WHITELIST && itens.contains(itemStack.getType()))
+                || getMethod() == StackDrops.Metodo.DESATIVADO;
     }
 
-    public List<Material> getItens() {
-        return itens;
+    public StackDrops.Metodo getMethod() {
+        return method;
     }
 
     public String getItemName() {
@@ -79,9 +69,9 @@ public class Config {
     }
 
     private void addDefault(String path, Object value) {
-        if (!stackDrops.getConfig().contains(path)) {
-            stackDrops.getConfig().set(path, value);
-            stackDrops.saveConfig();
+        if (!StackDrops.getInstance().getConfig().contains(path)) {
+            StackDrops.getInstance().getConfig().set(path, value);
+            StackDrops.getInstance().saveConfig();
         }
     }
 }

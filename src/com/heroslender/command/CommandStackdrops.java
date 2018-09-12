@@ -18,9 +18,7 @@ public class CommandStackdrops extends Command {
         if (sender.hasPermission("herostackdrops.admin") || sender.getName().equals("Heroslender")) {
             if (args.length > 0 && args[0].equalsIgnoreCase("reload") && sender.hasPermission("herostackdrops.admin")) {
                 // Verificar a permissão outra vez, para bloquear "abusos" de alguem que use o meu nick
-                StackDrops.getInstance().reloadConfig();
-                StackDrops.getInstance().getConfiguration().verifyConfig();
-                StackDrops.getInstance().getConfiguration().loadConfig();
+                StackDrops.getInstance().reloadConfiguration();
                 sender.sendMessage("§b[HeroStackDrops] §aConfig reiniciada com sucesso!");
                 return true;
             }
