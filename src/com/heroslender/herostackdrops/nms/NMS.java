@@ -1,7 +1,7 @@
-package com.heroslender;
+package com.heroslender.herostackdrops.nms;
 
+import com.heroslender.herostackdrops.StackDrops;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -15,7 +15,7 @@ import java.util.logging.Level;
 /**
  * Created by Heroslender.
  */
-class NMS {
+public class NMS {
     private static Field handleField;
     private static Method getItemMethod;
     private static Method itemGetNameMethod;
@@ -32,9 +32,7 @@ class NMS {
         } catch (Exception error) {
             StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar as variaveis de pegar o nome do ItemStack em NMS", error);
         }
-    }
 
-    static {
         try {
             itemAge = getNMSClass("EntityItem").getDeclaredField("age");
             itemAge.setAccessible(true);
@@ -43,7 +41,7 @@ class NMS {
         }
     }
 
-    static void registerCommand(Command command) {
+    public static void registerCommand(Command command) {
         try {
             Object craftServer = getOBCClass("CraftServer").cast(Bukkit.getServer());
             Object commandMap = craftServer.getClass().getMethod("getCommandMap").invoke(craftServer);
@@ -54,7 +52,7 @@ class NMS {
         }
     }
 
-    static void displayCollectItem(final Player player, final Item item) {
+    public static void displayCollectItem(final Player player, final Item item) {
         try {
             new CollectItemAnimation(player, item);
         } catch (Exception error) {
@@ -62,13 +60,25 @@ class NMS {
         }
     }
 
-    static void resetDespawnDelay(final Item item) {
+    public static void resetDespawnDelay(final Item item) {
         try {
             Object entityItem = item.getClass().getMethod("getHandle").invoke(item);
             itemAge.set(entityItem, 10);
         } catch (Exception error) {
             StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao resetar a idade do ItemStack em NMS", error);
         }
+    }
+
+    public static String getNome(final ItemStack itemStack) {
+        if (itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName())
+            return itemStack.getItemMeta().getDisplayName();
+        try {
+            Object handle = handleField.get(itemStack);
+            return (String) itemGetNameMethod.invoke(getItemMethod.invoke(handle), handle);
+        } catch (IllegalAccessException | InvocationTargetException error) {
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar o nome do ItemStack em NMS", error);
+        }
+        return itemStack.getType().name().replace('_', ' ').toLowerCase();
     }
 
     static void sendPacket(final Player player, final Object packet) {
@@ -79,18 +89,6 @@ class NMS {
         } catch (Exception error) {
             StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao tacar o packet no player", error);
         }
-    }
-
-    static String getNome(final ItemStack itemStack) {
-        if (itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName())
-            return itemStack.getItemMeta().getDisplayName();
-        try {
-            Object handle = handleField.get(itemStack);
-            return (String) itemGetNameMethod.invoke(getItemMethod.invoke(handle), handle);
-        } catch (IllegalAccessException | InvocationTargetException error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar o nome do ItemStack em NMS", error);
-        }
-        return itemStack.getType().name().replace('_', ' ').toLowerCase();
     }
 
     static Class<?> getOBCClass(final String name) {
@@ -110,52 +108,6 @@ class NMS {
         } catch (ClassNotFoundException error) {
             StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar a classe '" + name + "' do NMS", error);
             return null;
-        }
-    }
-}
-
-
-class CollectItemAnimation extends NMS {
-    private static Field getEntityItem;
-    static {
-        try {
-            getEntityItem = getOBCClass("entity.CraftItem").getDeclaredField("item");
-            getEntityItem.setAccessible(true);
-        } catch (Exception error) {
-            StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar a variavel da animação de collect", error);
-        }
-    }
-
-    public CollectItemAnimation(final Player player, final Item item) {
-        try {
-            Object entityItem = getEntityItem.get(item);
-
-            Object p = getNMSClass("PacketPlayOutSpawnEntity").getConstructor(getNMSClass("Entity"), int.class, int.class).newInstance(entityItem, 2, 100);
-            Object data = getNMSClass("PacketPlayOutEntityMetadata").getConstructor(int.class, getNMSClass("DataWatcher"), boolean.class)
-                    .newInstance(entityItem.getClass().getMethod("getId").invoke(entityItem), entityItem.getClass().getMethod("getDataWatcher").invoke(entityItem), true);
-            sendPacket(player, p);
-            sendPacket(player, data);
-            Object playAnim = null;
-            try {
-                playAnim = getNMSClass("PacketPlayOutCollect").getConstructor(int.class, int.class).newInstance(entityItem.getClass().getMethod("getId").invoke(entityItem), player.getEntityId());
-                sendPacket(player, playAnim);
-            } catch (NoSuchMethodException e) {
-                playAnim = getNMSClass("PacketPlayOutCollect").getConstructor(int.class, int.class, int.class).newInstance(entityItem.getClass().getMethod("getId").invoke(entityItem), player.getEntityId(), 0);
-                sendPacket(player, playAnim);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            Location loc = player.getLocation();
-            for (Player target : player.getWorld().getPlayers()) {
-                if (loc.distanceSquared(target.getLocation()) < 100) {
-                    sendPacket(target, p);
-                    sendPacket(target, data);
-                    sendPacket(target, playAnim);
-                }
-            }
-        } catch (Exception error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao aprensentar a animação de coletar o ItemStack em NMS", error);
         }
     }
 }

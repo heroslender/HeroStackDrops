@@ -1,6 +1,6 @@
-package com.heroslender.command;
+package com.heroslender.herostackdrops.command;
 
-import com.heroslender.StackDrops;
+import com.heroslender.herostackdrops.StackDrops;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.spigotmc.SpigotConfig;
