@@ -1,6 +1,7 @@
 package com.heroslender.herostackdrops;
 
 import com.heroslender.herostackdrops.command.CommandStackdrops;
+import com.heroslender.herostackdrops.event.ItemUpdateEvent;
 import com.heroslender.herostackdrops.nms.NMS;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
@@ -147,13 +148,20 @@ public class StackDrops extends JavaPlugin implements Listener {
     }
 
     private void updateItem(final Item item, final int quantidade) {
+        ItemUpdateEvent itemUpdateEvent = new ItemUpdateEvent(item, config.getItemName(), quantidade);
+        getServer().getPluginManager().callEvent(itemUpdateEvent);
+
+        updateItemSilent(itemUpdateEvent.getEntity(), itemUpdateEvent.getHologramTextFormat(), itemUpdateEvent.getQuantity());
+    }
+
+    private void updateItemSilent(final Item item, final String itemName, final int quantidade) {
         // Atualizar a MetaData do Item
         item.setMetadata(META_KEY, new FixedMetadataValue(this, quantidade));
         // Alterar a quantiade para 1, permitindo assim juntar com outros packs
         item.getItemStack().setAmount(1);
         // Defenir o holograma no Item
-        if (config.getItemName() != null) {
-            item.setCustomName(config.getItemName()
+        if (itemName != null) {
+            item.setCustomName(itemName
                     .replace("{quantidade}", Integer.toString(quantidade))
                     .replace("{nome}", NMS.getNome(item.getItemStack())));
             if (!item.isCustomNameVisible())
