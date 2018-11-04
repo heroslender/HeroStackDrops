@@ -1,0 +1,6 @@
+name: HeroStackDrops
+version: ${project.version}
+author: Heroslender
+main: com.heroslender.herostackdrops.StackDrops
+description: Plugin de juntar os itens dropados
+website: www.heroslender.cf/plugins/HeroStackDrops
