@@ -68,7 +68,7 @@ public class StackDrops extends JavaPlugin implements Listener {
                         int quant = targetItem.getMetadata(META_KEY).get(0).asInt() + itemStack.getAmount();
                         updateItem(targetItem, quant);
                         // Resetar a idade do item, para ele nao dar despawn rapidamente
-                        NMS.resetDespawnDelay(targetItem);
+                        targetItem.setTicksLived(2);
                         return;
                     }
                 }
@@ -90,7 +90,7 @@ public class StackDrops extends JavaPlugin implements Listener {
         int targetQuantidade = targetItem.hasMetadata(META_KEY) ? targetItem.getMetadata(META_KEY).get(0).asInt() : targetItem.getItemStack().getAmount();
         int originalQuantidade = originalItem.hasMetadata(META_KEY) ? originalItem.getMetadata(META_KEY).get(0).asInt() : originalItem.getItemStack().getAmount();
         updateItem(targetItem, targetQuantidade + originalQuantidade);
-        NMS.resetDespawnDelay(targetItem);
+        targetItem.setTicksLived(2);
         originalItem.remove();
         e.setCancelled(true);
     }

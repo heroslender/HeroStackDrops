@@ -19,7 +19,6 @@ public class NMS {
     private static Field handleField;
     private static Method getItemMethod;
     private static Method itemGetNameMethod;
-    private static Field itemAge;
 
     static {
         try {
@@ -31,13 +30,6 @@ public class NMS {
             itemGetNameMethod = getNMSClass("Item").getDeclaredMethod("a", itemStack);
         } catch (Exception error) {
             StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar as variaveis de pegar o nome do ItemStack em NMS", error);
-        }
-
-        try {
-            itemAge = getNMSClass("EntityItem").getDeclaredField("age");
-            itemAge.setAccessible(true);
-        } catch (NoSuchFieldException error) {
-            StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar a variavel de resetar a idade do ItemStack em NMS", error);
         }
     }
 
@@ -57,15 +49,6 @@ public class NMS {
             new CollectItemAnimation(player, item);
         } catch (Exception error) {
             StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao aprensentar a animação de coletar o ItemStack em NMS", error);
-        }
-    }
-
-    public static void resetDespawnDelay(final Item item) {
-        try {
-            Object entityItem = item.getClass().getMethod("getHandle").invoke(item);
-            itemAge.set(entityItem, 10);
-        } catch (Exception error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao resetar a idade do ItemStack em NMS", error);
         }
     }
 
