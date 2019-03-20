@@ -12,7 +12,6 @@
 
 ![Preview](https://github.com/heroslender/HeroStackDrops/raw/master/assets/preview.png)
 
-
 ## Config
 
 ```yaml
