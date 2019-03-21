@@ -32,3 +32,24 @@ raio-de-stack: 5
 ### Placeholders
 -   `{quantidade}` - Quantidade de itens no pack
 -   `{nome}` - Nome do item
+
+## API
+
+### Maven
+
+```xml
+<repository>
+    <id>heroslender-repo</id>
+    <url>https://nexus.heroslender.com/repository/maven-releases/</url>
+</repository>
+
+<dependency>
+  <groupId>com.heroslender</groupId>
+  <artifactId>HeroStackDrops</artifactId>
+  <version>1.7.2</version>
+</dependency>
+```
+
+### Events
+-   `ItemUpdateEvent` - Chamado quando é atualizada a quantidade de um pack
+-   `PlayerPickupItemEvent` - Chamado quando um player apanha um pack de itens
