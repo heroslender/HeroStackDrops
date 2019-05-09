@@ -3,6 +3,7 @@ package com.heroslender.herostackdrops.listener;
 import com.heroslender.herostackdrops.StackDrops;
 import com.heroslender.herostackdrops.controller.ConfigurationController;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.World;
 import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -19,7 +20,7 @@ public class ItemListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     private void onItemSpawn(final ItemSpawnEvent e) {
-        if (e.isCancelled())
+        if (e.isCancelled() || isWorldBlocked(e.getEntity().getWorld()))
             return;
 
         Item item = e.getEntity();
@@ -48,6 +49,10 @@ public class ItemListener implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGHEST)
     private void onItemMerge(final ItemMergeEvent e) {
+        if (e.isCancelled() || isWorldBlocked(e.getEntity().getWorld())) {
+            return;
+        }
+
         Item originalItem = e.getEntity();
         Item targetItem = e.getTarget();
         if (!targetItem.hasMetadata(META_KEY) && !originalItem.hasMetadata(META_KEY) && !configurationController.isItemAllowed(originalItem.getItemStack()))
@@ -59,5 +64,9 @@ public class ItemListener implements Listener {
         targetItem.setTicksLived(2);
         originalItem.remove();
         e.setCancelled(true);
+    }
+
+    private boolean isWorldBlocked(final World world) {
+        return configurationController.getBlockedWorlds().contains(world.getName());
     }
 }

@@ -35,6 +35,8 @@ restringir-itens:
     - 'COAL'
     - 'COBBLESTONE'
     - 'REDSTONE'
+mundos-bloqueados:
+  - 'seu_mundo_bloqueado'
 holograma:
   ativado: true
   texto: '&7{quantidade}x &e{nome}'

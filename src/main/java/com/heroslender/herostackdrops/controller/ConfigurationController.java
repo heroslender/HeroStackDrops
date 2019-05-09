@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -22,6 +23,7 @@ public class ConfigurationController {
 
     @Getter private StackMethod method;
     @Getter private List<MaterialData> itens;
+    @Getter private List<String> blockedWorlds;
     @Getter private String itemName;
     @Getter private Double stackRadius;
     @Getter private Boolean stackOnSpawn;
@@ -31,6 +33,11 @@ public class ConfigurationController {
         method = getStackMethodFrom(config.getString("restringir-itens.method", "DESATIVADO"));
 
         itens = new ArrayList<>(getItems(config.getStringList("restringir-itens.itens")));
+
+        blockedWorlds = config.getStringList("mundos-bloqueados");
+        if (blockedWorlds == null) {
+            blockedWorlds = Collections.emptyList();
+        }
 
         itemName = config.getBoolean("holograma.ativado", true)
                 ? config.getString("holograma.texto", "&7{quantidade}x &e{nome}").replace('&', '§')
