@@ -34,6 +34,9 @@ public class StackDrops extends JavaPlugin {
     @Override
     public void onEnable() {
         NMS.registerCommand(new CommandStackdrops());
+
+        // https://bstats.org/plugin/bukkit/HeroStackDrops
+        new Metrics(this);
     }
 
     public void updateItem(final Item item, final int quantidade) {
