@@ -67,6 +67,10 @@ public class ItemListener implements Listener {
     }
 
     private boolean isWorldBlocked(final World world) {
+        if (world == null) {
+            return true;
+        }
+
         return configurationController.getBlockedWorlds().contains(world.getName());
     }
 }
