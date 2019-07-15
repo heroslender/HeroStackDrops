@@ -4,6 +4,8 @@ import com.heroslender.herostackdrops.command.CommandStackdrops;
 import com.heroslender.herostackdrops.config.Constants;
 import com.heroslender.herostackdrops.controller.ConfigurationController;
 import com.heroslender.herostackdrops.event.ItemUpdateEvent;
+import com.heroslender.herostackdrops.listener.ItemListener;
+import com.heroslender.herostackdrops.listener.ItemPickupListener;
 import com.heroslender.herostackdrops.nms.NMS;
 import com.heroslender.herostackdrops.services.ConfigurationService;
 import com.heroslender.herostackdrops.services.ConfigurationServiceImpl;
@@ -11,6 +13,8 @@ import lombok.Getter;
 import org.bukkit.entity.Item;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.logging.Level;
 
 /**
  * Created by Heroslender.
@@ -33,7 +37,12 @@ public class StackDrops extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        configurationController.init();
+
         NMS.registerCommand(new CommandStackdrops());
+
+        getServer().getPluginManager().registerEvents(new ItemListener(configurationController), this);
+        getServer().getPluginManager().registerEvents(new ItemPickupListener(), this);
 
         // https://bstats.org/plugin/bukkit/HeroStackDrops
         new Metrics(this);
