@@ -12,6 +12,8 @@ import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Objects;
+
 import static com.heroslender.herostackdrops.config.Constants.META_KEY;
 
 @RequiredArgsConstructor
@@ -67,9 +69,7 @@ public class ItemListener implements Listener {
     }
 
     private boolean isWorldBlocked(final World world) {
-        if (world == null) {
-            return true;
-        }
+        Objects.requireNonNull(world, "world is required");
 
         return configurationController.getBlockedWorlds().contains(world.getName());
     }

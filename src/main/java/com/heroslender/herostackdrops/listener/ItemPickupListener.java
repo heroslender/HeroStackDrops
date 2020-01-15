@@ -2,7 +2,9 @@ package com.heroslender.herostackdrops.listener;
 
 import com.heroslender.herostackdrops.StackDrops;
 import com.heroslender.herostackdrops.config.Constants;
+import com.heroslender.herostackdrops.controller.ConfigurationController;
 import com.heroslender.herostackdrops.nms.NMS;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Sound;
 import org.bukkit.entity.Item;
@@ -22,8 +24,10 @@ import java.util.logging.Logger;
 
 import static com.heroslender.herostackdrops.config.Constants.META_KEY;
 
+@RequiredArgsConstructor
 public class ItemPickupListener implements Listener {
     private final Logger logger = StackDrops.getInstance().getLogger();
+    private final ConfigurationController configurationController;
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerPickup(final PlayerPickupItemEvent e) {
@@ -84,6 +88,10 @@ public class ItemPickupListener implements Listener {
     }
 
     private void collectItem(final Player player, final Item item) {
+        if (!configurationController.getAnimation()) {
+            return;
+        }
+
         try {
             NMS.displayCollectItem(player, item);
             try {

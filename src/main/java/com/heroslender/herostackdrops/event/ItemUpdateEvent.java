@@ -10,12 +10,12 @@ public class ItemUpdateEvent extends EntityEvent {
     private static final HandlerList handlers = new HandlerList();
 
     @Getter @Setter private String hologramTextFormat;
-    @Getter @Setter private int quantity;
+    @Getter @Setter private int amount;
 
-    public ItemUpdateEvent(Item item, String hologramTextFormat, int quantity) {
+    public ItemUpdateEvent(Item item, String hologramTextFormat, int amount) {
         super(item);
         this.hologramTextFormat = hologramTextFormat;
-        this.quantity = quantity;
+        this.amount = amount;
     }
 
     public static HandlerList getHandlerList() {

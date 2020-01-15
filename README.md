@@ -40,13 +40,13 @@ raio-de-stack: 5
 ```xml
 <repository>
     <id>heroslender-repo</id>
-    <url>https://nexus.heroslender.com/repository/maven-releases/</url>
+    <url>https://nexus.heroslender.com/repository/maven-public/</url>
 </repository>
 
 <dependency>
   <groupId>com.heroslender</groupId>
   <artifactId>HeroStackDrops</artifactId>
-  <version>1.7.3</version>
+  <version>1.8.2</version>
 </dependency>
 ```
 

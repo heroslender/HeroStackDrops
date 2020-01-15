@@ -14,25 +14,19 @@ import org.bukkit.entity.Item;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.logging.Level;
-
 /**
  * Created by Heroslender.
  */
 public class StackDrops extends JavaPlugin {
-    private static StackDrops instance;
+    @Getter private static StackDrops instance;
     @Getter private final ConfigurationController configurationController;
 
     public StackDrops() {
         instance = this;
         saveDefaultConfig();
 
-        ConfigurationService configurationService = new ConfigurationServiceImpl();
+        ConfigurationService configurationService = new ConfigurationServiceImpl(this);
         this.configurationController = new ConfigurationController(configurationService);
-    }
-
-    public static StackDrops getInstance() {
-        return instance;
     }
 
     @Override
@@ -42,28 +36,27 @@ public class StackDrops extends JavaPlugin {
         NMS.registerCommand(new CommandStackdrops());
 
         getServer().getPluginManager().registerEvents(new ItemListener(configurationController), this);
-        getServer().getPluginManager().registerEvents(new ItemPickupListener(), this);
+        getServer().getPluginManager().registerEvents(new ItemPickupListener(configurationController), this);
 
         // https://bstats.org/plugin/bukkit/HeroStackDrops
         new Metrics(this);
     }
 
-    public void updateItem(final Item item, final int quantidade) {
-        ItemUpdateEvent itemUpdateEvent = new ItemUpdateEvent(item, configurationController.getItemName(), quantidade);
+    public void updateItem(final Item item, final int amount) {
+        ItemUpdateEvent itemUpdateEvent = new ItemUpdateEvent(item, configurationController.getItemName(), amount);
         getServer().getPluginManager().callEvent(itemUpdateEvent);
 
-        updateItemSilent(itemUpdateEvent.getEntity(), itemUpdateEvent.getHologramTextFormat(), itemUpdateEvent.getQuantity());
+        updateItemSilent(itemUpdateEvent.getEntity(), itemUpdateEvent.getHologramTextFormat(), itemUpdateEvent.getAmount());
     }
 
-    public void updateItemSilent(final Item item, final String itemName, final int quantidade) {
-        // Atualizar a MetaData do Item
-        item.setMetadata(Constants.META_KEY, new FixedMetadataValue(this, quantidade));
+    public void updateItemSilent(final Item item, final String itemName, final int amount) {
+        item.setMetadata(Constants.META_KEY, new FixedMetadataValue(this, amount));
         // Alterar a quantiade para 1, permitindo assim juntar com outros packs
         item.getItemStack().setAmount(1);
-        // Defenir o holograma no Item
+
         if (itemName != null) {
             item.setCustomName(itemName
-                    .replace("{quantidade}", Integer.toString(quantidade))
+                    .replace("{quantidade}", Integer.toString(amount))
                     .replace("{nome}", NMS.getNome(item.getItemStack())));
             if (!item.isCustomNameVisible())
                 item.setCustomNameVisible(true);

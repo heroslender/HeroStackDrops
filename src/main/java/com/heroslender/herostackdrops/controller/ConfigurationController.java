@@ -22,17 +22,18 @@ public class ConfigurationController {
     private final ConfigurationService configurationService;
 
     @Getter private StackMethod method;
-    @Getter private List<MaterialData> itens;
+    @Getter private List<MaterialData> items;
     @Getter private List<String> blockedWorlds;
     @Getter private String itemName;
     @Getter private Double stackRadius;
     @Getter private Boolean stackOnSpawn;
+    @Getter private Boolean animation;
 
     public void init() {
         val config = configurationService.getConfig();
         method = getStackMethodFrom(config.getString("restringir-itens.method", "DESATIVADO"));
 
-        itens = new ArrayList<>(getItems(config.getStringList("restringir-itens.itens")));
+        items = new ArrayList<>(getItems(config.getStringList("restringir-itens.itens")));
 
         blockedWorlds = config.getStringList("mundos-bloqueados");
         if (blockedWorlds == null) {
@@ -45,6 +46,8 @@ public class ConfigurationController {
 
         stackOnSpawn = config.getBoolean("stack-on-spawn", false);
         stackRadius = config.getDouble("raio-de-stack", 5D);
+
+        animation = config.getBoolean("animacao", true);
     }
 
     /**
@@ -55,11 +58,11 @@ public class ConfigurationController {
      * {@code false} otherwise.
      */
     public Boolean isItemAllowed(final ItemStack itemStack) {
-        val itensContains = itens.contains(itemStack.getData());
+        val itemsContains = items.contains(itemStack.getData());
 
-        return (method == StackMethod.BLACKLIST && !itensContains)
-                || (method == StackMethod.WHITELIST && itensContains)
-                || method == StackMethod.DESATIVADO;
+        return (method == StackMethod.BLACKLIST && !itemsContains)
+                || (method == StackMethod.WHITELIST && itemsContains)
+                || method == StackMethod.ALL;
     }
 
     public List<Item> getNearby(final Item source) {
@@ -83,7 +86,7 @@ public class ConfigurationController {
             case "blacklist":
                 return StackMethod.BLACKLIST;
             default:
-                return StackMethod.DESATIVADO;
+                return StackMethod.ALL;
         }
     }
 
@@ -111,19 +114,19 @@ public class ConfigurationController {
      * @return {@link Optional} containing the {@link MaterialData} if valid.
      */
     private Optional<MaterialData> getMaterialDataFor(final String source) {
-        val splited = source.split(":");
+        val parts = source.split(":");
 
-        val mat = Material.matchMaterial(splited[0]);
+        val mat = Material.matchMaterial(parts[0]);
         if (mat == null) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "O material '{}' nao existe!", splited[0]);
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "O material '{}' nao existe!", parts[0]);
             return Optional.empty();
         }
 
         val materialData = new MaterialData(mat);
 
-        if (splited.length > 1) {
+        if (parts.length > 1) {
             try {
-                materialData.setData(Byte.parseByte(splited[1]));
+                materialData.setData(Byte.parseByte(parts[1]));
             } catch (NumberFormatException ignore) {
             }
         }
@@ -132,8 +135,11 @@ public class ConfigurationController {
     }
 
     public enum StackMethod {
+        /** Only the items listed will stack. */
         WHITELIST,
+        /** All items will stack, but the items listed won't. */
         BLACKLIST,
-        DESATIVADO
+        /** All items will stack, regardless of the items list */
+        ALL
     }
 }

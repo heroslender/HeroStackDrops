@@ -19,6 +19,7 @@ public class NMS {
     private static Field handleField;
     private static Method getItemMethod;
     private static Method itemGetNameMethod;
+    private static boolean isNmsNameEnabled = true;
 
     static {
         try {
@@ -29,6 +30,7 @@ public class NMS {
             getItemMethod = itemStack.getDeclaredMethod("getItem");
             itemGetNameMethod = getNMSClass("Item").getDeclaredMethod("a", itemStack);
         } catch (Exception error) {
+            isNmsNameEnabled = false;
             StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar as variaveis de pegar o nome do ItemStack em NMS", error);
         }
     }
@@ -47,20 +49,23 @@ public class NMS {
     public static void displayCollectItem(final Player player, final Item item) {
         try {
             new CollectItemAnimation(player, item);
-        } catch (Exception error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao aprensentar a animação de coletar o ItemStack em NMS", error);
+        } catch (Exception ignore) {
         }
     }
 
     public static String getNome(final ItemStack itemStack) {
         if (itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName())
             return itemStack.getItemMeta().getDisplayName();
-        try {
-            Object handle = handleField.get(itemStack);
-            return (String) itemGetNameMethod.invoke(getItemMethod.invoke(handle), handle);
-        } catch (IllegalAccessException | InvocationTargetException error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar o nome do ItemStack em NMS", error);
+
+        if (isNmsNameEnabled) {
+            try {
+                Object handle = handleField.get(itemStack);
+                return (String) itemGetNameMethod.invoke(getItemMethod.invoke(handle), handle);
+            } catch (IllegalAccessException | InvocationTargetException error) {
+                StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar o nome do ItemStack em NMS", error);
+            }
         }
+
         return itemStack.getType().name().replace('_', ' ').toLowerCase();
     }
 

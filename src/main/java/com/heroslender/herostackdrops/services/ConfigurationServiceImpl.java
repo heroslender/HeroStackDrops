@@ -1,18 +1,21 @@
 package com.heroslender.herostackdrops.services;
 
 import com.heroslender.herostackdrops.StackDrops;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
 
+@RequiredArgsConstructor
 public class ConfigurationServiceImpl implements ConfigurationService {
+    private final JavaPlugin plugin;
 
     @Override
     public void init() {
-        StackDrops main = StackDrops.getInstance();
-        main.saveDefaultConfig();
-        main.reloadConfig();
-        final FileConfiguration configuration = main.getConfig();
+        plugin.saveDefaultConfig();
+        plugin.reloadConfig();
+        final FileConfiguration configuration = plugin.getConfig();
 
         if (!configuration.contains("restringir-itens.method"))
             configuration.set("restringir-itens.method", "DESATIVADO");
@@ -26,13 +29,15 @@ public class ConfigurationServiceImpl implements ConfigurationService {
             configuration.set("stack-on-spawn", false);
         if (!configuration.contains("raio-de-stack"))
             configuration.set("raio-de-stack", 5);
+        if (!configuration.contains("animacao"))
+            configuration.set("animacao", true);
 
-        main.saveConfig();
+        plugin.saveConfig();
     }
 
     @Override
     public FileConfiguration getConfig() {
-        return StackDrops.getInstance().getConfig();
+        return plugin.getConfig();
     }
 
     @Override
