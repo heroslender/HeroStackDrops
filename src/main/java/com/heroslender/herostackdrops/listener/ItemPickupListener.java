@@ -1,7 +1,6 @@
 package com.heroslender.herostackdrops.listener;
 
 import com.heroslender.herostackdrops.StackDrops;
-import com.heroslender.herostackdrops.config.Constants;
 import com.heroslender.herostackdrops.controller.ConfigurationController;
 import com.heroslender.herostackdrops.nms.NMS;
 import lombok.RequiredArgsConstructor;
@@ -57,33 +56,28 @@ public class ItemPickupListener implements Listener {
     private boolean performPickup(final Item item, final Inventory inventory, final Player player) {
         if (!item.hasMetadata(META_KEY)) return false;
 
-        val startQuant = item.getMetadata(META_KEY).get(0).asInt();
-        int quant = startQuant;
-        while (quant > 0) {
-            int stackSize = (quant > item.getItemStack().getType().getMaxStackSize()) ? item.getItemStack().getType().getMaxStackSize() : quant;
-
-            ItemStack itemStack = item.getItemStack().clone();
-            itemStack.setAmount(stackSize);
-            Map<Integer, ItemStack> result = inventory.addItem(itemStack);
-            if (!result.isEmpty()) {
-                quant -= stackSize - result.values().iterator().next().getAmount();
-                break;
-            }
-            quant -= stackSize;
+        val itemStack = item.getItemStack().clone();
+        val amount = item.getMetadata(META_KEY).get(0).asInt();
+        itemStack.setAmount(amount);
+        int leftOver = 0;
+        Map<Integer, ItemStack> result = inventory.addItem(itemStack);
+        if (!result.isEmpty()) {
+            leftOver = result.values().iterator().next().getAmount();
         }
 
         if (player != null) {
-            val pickupEvent = new com.heroslender.herostackdrops.event.PlayerPickupItemEvent(player, item, startQuant - quant);
+            val pickupEvent = new com.heroslender.herostackdrops.event.PlayerPickupItemEvent(player, item, amount - leftOver);
             StackDrops.getInstance().getServer().getPluginManager().callEvent(pickupEvent);
         }
 
         if (player != null)
             collectItem(player, item);
-        if (quant == 0) {
+        if (leftOver == 0) {
             item.remove();
         } else {
-            StackDrops.getInstance().updateItem(item, quant);
+            StackDrops.getInstance().updateItem(item, leftOver);
         }
+
         return true;
     }
 

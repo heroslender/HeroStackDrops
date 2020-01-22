@@ -3,7 +3,6 @@ package com.heroslender.herostackdrops.command;
 import com.heroslender.herostackdrops.StackDrops;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.spigotmc.SpigotConfig;
 
 import java.util.Collections;
 
@@ -25,8 +24,7 @@ public class CommandStackdrops extends Command {
             sender.sendMessage("§b[HeroStackDrops] §e" + StackDrops.getInstance().getDescription().getFullName());
             return true;
         }
-        // Se não tiver permissão, fala para o mlk que o comando não existe
-        sender.sendMessage(SpigotConfig.unknownCommandMessage);
-        return true;
+
+        return false;
     }
 }

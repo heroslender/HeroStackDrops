@@ -3,7 +3,9 @@ package com.heroslender.herostackdrops.listener;
 import com.heroslender.herostackdrops.StackDrops;
 import com.heroslender.herostackdrops.controller.ConfigurationController;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -12,6 +14,9 @@ import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import java.util.Objects;
 
 import static com.heroslender.herostackdrops.config.Constants.META_KEY;
@@ -20,51 +25,63 @@ import static com.heroslender.herostackdrops.config.Constants.META_KEY;
 public class ItemListener implements Listener {
     private final ConfigurationController configurationController;
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     private void onItemSpawn(final ItemSpawnEvent e) {
-        if (e.isCancelled() || isWorldBlocked(e.getEntity().getWorld()))
+        if (isWorldBlocked(e.getEntity().getWorld()))
             return;
 
-        Item item = e.getEntity();
-        ItemStack itemStack = item.getItemStack();
+        val item = e.getEntity();
+        val itemStack = item.getItemStack();
 
         if (!configurationController.isItemAllowed(itemStack)) return;
 
         if (configurationController.getStackOnSpawn()) {
-            for (Item targetItem : configurationController.getNearby(item)) {
-                if (targetItem.hasMetadata(META_KEY) && targetItem.getItemStack().isSimilar(itemStack)) {
-                    e.setCancelled(true);
-                    int quant = targetItem.getMetadata(META_KEY).get(0).asInt() + itemStack.getAmount();
-                    StackDrops.getInstance().updateItem(targetItem, quant);
-                    // Resetar a idade do item, para ele nao dar despawn rapidamente
-                    targetItem.setTicksLived(2);
-                    return;
+            for (Entity entity : configurationController.getNearby(item)) {
+                if (!(entity instanceof Item)) {
+                    continue;
                 }
 
+                Item targetItem = (Item) entity;
+                if (targetItem.getItemStack().isSimilar(itemStack)) {
+                    val metadata = targetItem.getMetadata(META_KEY);
+                    if (!metadata.isEmpty()) {
+                        e.setCancelled(true);
+                        int amount = metadata.get(0).asInt() + itemStack.getAmount();
+                        StackDrops.getInstance().updateItem(targetItem, amount);
+
+                        // Reset the item age, preventing it from despawning
+                        targetItem.setTicksLived(2);
+                        return;
+                    }
+                }
             }
         }
         StackDrops.getInstance().updateItem(item, itemStack.getAmount());
     }
 
-    /**
-     * Quando 2 itens ja dropados se juntam, atualizar a quantidade de um e remover o outro
-     */
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     private void onItemMerge(final ItemMergeEvent e) {
-        if (e.isCancelled() || isWorldBlocked(e.getEntity().getWorld())) {
+        if (isWorldBlocked(e.getEntity().getWorld())) {
             return;
         }
 
-        Item originalItem = e.getEntity();
-        Item targetItem = e.getTarget();
-        if (!targetItem.hasMetadata(META_KEY) && !originalItem.hasMetadata(META_KEY) && !configurationController.isItemAllowed(originalItem.getItemStack()))
+        val source = e.getEntity();
+        val target = e.getTarget();
+        if (!configurationController.isItemAllowed(source.getItemStack())) {
             return;
+        }
 
-        int targetQuantidade = targetItem.hasMetadata(META_KEY) ? targetItem.getMetadata(META_KEY).get(0).asInt() : targetItem.getItemStack().getAmount();
-        int originalQuantidade = originalItem.hasMetadata(META_KEY) ? originalItem.getMetadata(META_KEY).get(0).asInt() : originalItem.getItemStack().getAmount();
-        StackDrops.getInstance().updateItem(targetItem, targetQuantidade + originalQuantidade);
-        targetItem.setTicksLived(2);
-        originalItem.remove();
+        val sourceMetadata = source.getMetadata(META_KEY);
+        val targetMetadata = target.getMetadata(META_KEY);
+        if (sourceMetadata.isEmpty() && targetMetadata.isEmpty()) {
+            return;
+        }
+
+        int targetAmount = targetMetadata.isEmpty() ? target.getItemStack().getAmount() : targetMetadata.get(0).asInt();
+        int sourceAmount = sourceMetadata.isEmpty() ? source.getItemStack().getAmount() : sourceMetadata.get(0).asInt();
+        StackDrops.getInstance().updateItem(target, targetAmount + sourceAmount);
+        target.setTicksLived(2);
+        source.remove();
         e.setCancelled(true);
     }
 

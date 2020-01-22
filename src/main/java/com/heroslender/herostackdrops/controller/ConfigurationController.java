@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
@@ -65,12 +66,8 @@ public class ConfigurationController {
                 || method == StackMethod.ALL;
     }
 
-    public List<Item> getNearby(final Item source) {
-        return source.getNearbyEntities(getStackRadius(), getStackRadius(), getStackRadius())
-                .stream()
-                .filter(entity -> entity instanceof Item)
-                .map(entity -> (Item) entity)
-                .collect(Collectors.toList());
+    public List<Entity> getNearby(final Item source) {
+        return source.getNearbyEntities(getStackRadius(), getStackRadius(), getStackRadius());
     }
 
     /**
