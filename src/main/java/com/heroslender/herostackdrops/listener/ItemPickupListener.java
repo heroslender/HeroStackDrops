@@ -5,6 +5,7 @@ import com.heroslender.herostackdrops.controller.ConfigurationController;
 import com.heroslender.herostackdrops.nms.NMS;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -54,20 +55,17 @@ public class ItemPickupListener implements Listener {
     }
 
     private boolean performPickup(final Item item, final Inventory inventory, final Player player) {
-        if (!item.hasMetadata(META_KEY)) return false;
-
-        val itemStack = item.getItemStack().clone();
-        val amount = item.getMetadata(META_KEY).get(0).asInt();
-        itemStack.setAmount(amount);
-        int leftOver = 0;
-        Map<Integer, ItemStack> result = inventory.addItem(itemStack);
-        if (!result.isEmpty()) {
-            leftOver = result.values().iterator().next().getAmount();
+        val metadata = item.getMetadata(META_KEY);
+        if (metadata.isEmpty()) {
+            return false;
         }
+
+        val amount = metadata.get(0).asInt();
+        val leftOver = addItemToInv(item.getItemStack(), amount, inventory);
 
         if (player != null) {
             val pickupEvent = new com.heroslender.herostackdrops.event.PlayerPickupItemEvent(player, item, amount - leftOver);
-            StackDrops.getInstance().getServer().getPluginManager().callEvent(pickupEvent);
+            Bukkit.getPluginManager().callEvent(pickupEvent);
         }
 
         if (player != null)
@@ -79,6 +77,17 @@ public class ItemPickupListener implements Listener {
         }
 
         return true;
+    }
+
+    private int addItemToInv(final ItemStack itemStack, final int amount, final Inventory inventory) {
+        itemStack.setAmount(amount);
+
+        Map<Integer, ItemStack> result = inventory.addItem(itemStack);
+        if (!result.isEmpty()) {
+            return result.values().iterator().next().getAmount();
+        }
+
+        return 0;
     }
 
     private void collectItem(final Player player, final Item item) {
