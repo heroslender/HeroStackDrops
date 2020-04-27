@@ -66,7 +66,7 @@ public class ConfigurationController {
                 || method == StackMethod.ALL;
     }
 
-    public List<Entity> getNearby(final Item source) {
+    public List<Entity> getNearby(final Entity source) {
         return source.getNearbyEntities(getStackRadius(), getStackRadius(), getStackRadius());
     }
 

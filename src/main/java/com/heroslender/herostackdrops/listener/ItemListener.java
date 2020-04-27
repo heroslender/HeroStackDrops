@@ -1,5 +1,6 @@
 package com.heroslender.herostackdrops.listener;
 
+import com.google.common.collect.Maps;
 import com.heroslender.herostackdrops.StackDrops;
 import com.heroslender.herostackdrops.controller.ConfigurationController;
 import lombok.RequiredArgsConstructor;
@@ -10,9 +11,12 @@ import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
+import org.bukkit.inventory.ItemStack;
 
+import java.util.Map;
 import java.util.Objects;
 
 import static com.heroslender.herostackdrops.config.Constants.META_KEY;
@@ -20,6 +24,35 @@ import static com.heroslender.herostackdrops.config.Constants.META_KEY;
 @RequiredArgsConstructor
 public class ItemListener implements Listener {
     private final ConfigurationController configurationController;
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    private void onMobKill(final EntityDeathEvent e) {
+        if (isWorldBlocked(e.getEntity().getWorld()))
+            return;
+
+        Map<ItemStack, Integer> toDrop = Maps.newHashMap();
+
+        for (ItemStack drop : e.getDrops()) {
+            boolean added = false;
+            for (Map.Entry<ItemStack, Integer> entry : toDrop.entrySet()) {
+                if (entry.getKey().isSimilar(drop)) {
+                    toDrop.put(entry.getKey(), entry.getValue() + drop.getAmount());
+                    added = true;
+                    break;
+                }
+            }
+
+            if (!added) {
+                toDrop.put(drop, drop.getAmount());
+            }
+        }
+
+        for (Map.Entry<ItemStack, Integer> entry : toDrop.entrySet()) {
+            spawnStack(entry.getKey(), entry.getValue(), e.getEntity(), null);
+        }
+
+        e.getDrops().clear();
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     private void onItemSpawn(final ItemSpawnEvent e) {
@@ -29,7 +62,12 @@ public class ItemListener implements Listener {
         val item = e.getEntity();
         val itemStack = item.getItemStack();
 
-        if (!configurationController.isItemAllowed(itemStack)) return;
+        spawnStack(itemStack, itemStack.getAmount(), item, item);
+    }
+
+
+    private boolean spawnStack(ItemStack itemStack, int itemAmount, Entity source, Item item) {
+        if (!configurationController.isItemAllowed(itemStack)) return false;
 
         if (configurationController.getStackOnSpawn()) {
             for (Entity entity : configurationController.getNearby(item)) {
@@ -41,18 +79,21 @@ public class ItemListener implements Listener {
                 if (targetItem.getItemStack().isSimilar(itemStack)) {
                     val metadata = targetItem.getMetadata(META_KEY);
                     if (!metadata.isEmpty()) {
-                        e.setCancelled(true);
-                        int amount = metadata.get(0).asInt() + itemStack.getAmount();
+                        int amount = metadata.get(0).asInt() + itemAmount;
                         StackDrops.getInstance().updateItem(targetItem, amount);
 
                         // Reset the item age, preventing it from despawning
                         targetItem.setTicksLived(2);
-                        return;
+                        return true;
                     }
                 }
             }
         }
-        StackDrops.getInstance().updateItem(item, itemStack.getAmount());
+        if (item == null) {
+            item = source.getWorld().dropItemNaturally(source.getLocation(), itemStack);
+        }
+        StackDrops.getInstance().updateItem(item, itemAmount);
+        return false;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
