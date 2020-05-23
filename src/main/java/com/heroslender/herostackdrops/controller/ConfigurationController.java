@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,9 +26,9 @@ public class ConfigurationController {
     @Getter private List<MaterialData> items;
     @Getter private List<String> blockedWorlds;
     @Getter private String itemName;
-    @Getter private Double stackRadius;
-    @Getter private Boolean stackOnSpawn;
-    @Getter private Boolean animation;
+    @Getter private double stackRadius;
+    @Getter private boolean stackOnSpawn;
+    @Getter private boolean showAnimation;
 
     public void init() {
         val config = configurationService.getConfig();
@@ -48,7 +48,7 @@ public class ConfigurationController {
         stackOnSpawn = config.getBoolean("stack-on-spawn", false);
         stackRadius = config.getDouble("raio-de-stack", 5D);
 
-        animation = config.getBoolean("animacao", true);
+        showAnimation = config.getBoolean("animacao", true);
     }
 
     /**
@@ -58,12 +58,13 @@ public class ConfigurationController {
      * @return {@code true} if the item is allowed to stack,
      * {@code false} otherwise.
      */
-    public Boolean isItemAllowed(final ItemStack itemStack) {
-        val itemsContains = items.contains(itemStack.getData());
+    public boolean isItemDisabled(@NotNull final ItemStack itemStack) {
+        if (method == StackMethod.ALL) {
+            return false;
+        }
 
-        return (method == StackMethod.BLACKLIST && !itemsContains)
-                || (method == StackMethod.WHITELIST && itemsContains)
-                || method == StackMethod.ALL;
+        val itemsContains = items.contains(itemStack.getData());
+        return (method != StackMethod.BLACKLIST || itemsContains) && (method != StackMethod.WHITELIST || !itemsContains);
     }
 
     public List<Entity> getNearby(final Entity source) {

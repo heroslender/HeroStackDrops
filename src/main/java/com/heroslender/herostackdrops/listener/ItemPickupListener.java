@@ -91,12 +91,13 @@ public class ItemPickupListener implements Listener {
     }
 
     private void collectItem(final Player player, final Item item) {
-        if (!configurationController.getAnimation()) {
+        if (!configurationController.isShowAnimation()) {
             return;
         }
 
         try {
             NMS.displayCollectItem(player, item);
+
             try {
                 player.playSound(player.getLocation(), Sound.ITEM_PICKUP, 0.5F, 10F);
             } catch (NoSuchFieldError e) {

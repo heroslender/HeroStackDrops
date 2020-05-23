@@ -15,6 +15,8 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.ItemMergeEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -62,15 +64,17 @@ public class ItemListener implements Listener {
         val item = e.getEntity();
         val itemStack = item.getItemStack();
 
-        spawnStack(itemStack, itemStack.getAmount(), item, item);
+        val cancelEvent = spawnStack(itemStack, itemStack.getAmount(), item, item);
+
+        e.setCancelled(cancelEvent);
     }
 
 
-    private boolean spawnStack(ItemStack itemStack, int itemAmount, Entity source, Item item) {
-        if (!configurationController.isItemAllowed(itemStack)) return false;
+    private boolean spawnStack(ItemStack itemStack, int itemAmount, Entity source, @Nullable Item item) {
+        if (configurationController.isItemDisabled(itemStack)) return false;
 
-        if (configurationController.getStackOnSpawn()) {
-            for (Entity entity : configurationController.getNearby(item)) {
+        if (configurationController.isStackOnSpawn()) {
+            for (Entity entity : configurationController.getNearby(source)) {
                 if (!(entity instanceof Item)) {
                     continue;
                 }
@@ -104,7 +108,7 @@ public class ItemListener implements Listener {
 
         val source = e.getEntity();
         val target = e.getTarget();
-        if (!configurationController.isItemAllowed(source.getItemStack())) {
+        if (configurationController.isItemDisabled(source.getItemStack())) {
             return;
         }
 
@@ -122,7 +126,7 @@ public class ItemListener implements Listener {
         e.setCancelled(true);
     }
 
-    private boolean isWorldBlocked(final World world) {
+    private boolean isWorldBlocked(@NotNull final World world) {
         Objects.requireNonNull(world, "world is required");
 
         return configurationController.getBlockedWorlds().contains(world.getName());
