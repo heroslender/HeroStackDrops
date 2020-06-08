@@ -80,7 +80,7 @@ public class ItemListener implements Listener {
                 }
 
                 Item targetItem = (Item) entity;
-                if (targetItem.getItemStack().isSimilar(itemStack)) {
+                if (configurationController.isSimilar(itemStack, targetItem.getItemStack())) {
                     val metadata = targetItem.getMetadata(META_KEY);
                     if (!metadata.isEmpty()) {
                         int amount = metadata.get(0).asInt() + itemAmount;

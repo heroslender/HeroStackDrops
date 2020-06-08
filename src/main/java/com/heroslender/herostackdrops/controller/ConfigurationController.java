@@ -71,6 +71,10 @@ public class ConfigurationController {
         return source.getNearbyEntities(getStackRadius(), getStackRadius(), getStackRadius());
     }
 
+    public boolean isSimilar(@NotNull final ItemStack source, @NotNull final ItemStack other) {
+        return source.getType() == other.getType() && source.getDurability() == other.getDurability();
+    }
+
     /**
      * Get the {@link StackMethod} for the given string
      *
