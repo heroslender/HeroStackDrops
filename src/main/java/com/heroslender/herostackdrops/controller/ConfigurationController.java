@@ -8,7 +8,6 @@ import lombok.val;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.MaterialData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -63,7 +62,15 @@ public class ConfigurationController {
             return false;
         }
 
-        val itemsContains = items.contains(itemStack.getData());
+        val data = itemStack.getData();
+        boolean itemsContains = false;
+        for (MaterialData materialData : items) {
+            if (materialData.equals(data)) {
+                itemsContains = true;
+                break;
+            }
+        }
+
         return (method != StackMethod.BLACKLIST || itemsContains) && (method != StackMethod.WHITELIST || !itemsContains);
     }
 
@@ -137,11 +144,39 @@ public class ConfigurationController {
     }
 
     public enum StackMethod {
-        /** Only the items listed will stack. */
+        /**
+         * Only the items listed will stack.
+         */
         WHITELIST,
-        /** All items will stack, but the items listed won't. */
+        /**
+         * All items will stack, but the items listed won't.
+         */
         BLACKLIST,
-        /** All items will stack, regardless of the items list */
+        /**
+         * All items will stack, regardless of the items list
+         */
         ALL
     }
+
+    private static class MaterialData extends org.bukkit.material.MaterialData {
+        private final boolean ignoreData;
+
+        public MaterialData(Material type) {
+            super(type);
+
+            this.ignoreData = type.getMaxDurability() > 0;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof org.bukkit.material.MaterialData) {
+                org.bukkit.material.MaterialData md = (org.bukkit.material.MaterialData) obj;
+
+                return (md.getItemTypeId() == getItemTypeId() && (ignoreData || md.getData() == getData()));
+            } else {
+                return false;
+            }
+        }
+    }
+
 }
