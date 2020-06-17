@@ -79,7 +79,7 @@ public class ConfigurationController {
     }
 
     public boolean isSimilar(@NotNull final ItemStack source, @NotNull final ItemStack other) {
-        return source.getType() == other.getType() && source.getDurability() == other.getDurability();
+        return source.isSimilar(other);
     }
 
     /**
