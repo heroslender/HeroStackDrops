@@ -18,6 +18,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 
@@ -33,8 +34,14 @@ public class ItemListener implements Listener {
             return;
 
         Map<ItemStack, Integer> toDrop = Maps.newHashMap();
+        final Iterator<ItemStack> dropsIt = e.getDrops().iterator();
+        while (dropsIt.hasNext()) {
+            final ItemStack drop = dropsIt.next();
 
-        for (ItemStack drop : e.getDrops()) {
+            if (configurationController.isItemDisabled(drop)) {
+                continue;
+            }
+
             boolean added = false;
             for (Map.Entry<ItemStack, Integer> entry : toDrop.entrySet()) {
                 if (entry.getKey().isSimilar(drop)) {
@@ -47,13 +54,13 @@ public class ItemListener implements Listener {
             if (!added) {
                 toDrop.put(drop, drop.getAmount());
             }
+
+            dropsIt.remove();
         }
 
         for (Map.Entry<ItemStack, Integer> entry : toDrop.entrySet()) {
             spawnStack(entry.getKey(), entry.getValue(), e.getEntity(), null);
         }
-
-        e.getDrops().clear();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -66,12 +73,12 @@ public class ItemListener implements Listener {
 
         val cancelEvent = spawnStack(itemStack, itemStack.getAmount(), item, item);
 
-        e.setCancelled(cancelEvent);
+        e.setCancelled(cancelEvent == StackResult.STACKED);
     }
 
 
-    private boolean spawnStack(ItemStack itemStack, int itemAmount, Entity source, @Nullable Item item) {
-        if (configurationController.isItemDisabled(itemStack)) return false;
+    private StackResult spawnStack(ItemStack itemStack, int itemAmount, Entity source, @Nullable Item item) {
+        if (configurationController.isItemDisabled(itemStack)) return StackResult.DISABLED;
 
         if (configurationController.isStackOnSpawn()) {
             for (Entity entity : configurationController.getNearby(source)) {
@@ -88,7 +95,7 @@ public class ItemListener implements Listener {
 
                         // Reset the item age, preventing it from despawning
                         targetItem.setTicksLived(2);
-                        return true;
+                        return StackResult.STACKED;
                     }
                 }
             }
@@ -97,7 +104,7 @@ public class ItemListener implements Listener {
             item = source.getWorld().dropItemNaturally(source.getLocation(), itemStack);
         }
         StackDrops.getInstance().updateItem(item, itemAmount);
-        return false;
+        return StackResult.INITIALIZED;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -130,5 +137,11 @@ public class ItemListener implements Listener {
         Objects.requireNonNull(world, "world is required");
 
         return configurationController.getBlockedWorlds().contains(world.getName());
+    }
+
+    private enum StackResult {
+        DISABLED,
+        STACKED,
+        INITIALIZED
     }
 }
