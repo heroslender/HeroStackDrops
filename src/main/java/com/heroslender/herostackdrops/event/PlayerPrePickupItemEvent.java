@@ -1,21 +1,22 @@
 package com.heroslender.herostackdrops.event;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
 
-public class PlayerPickupItemEvent extends PlayerEvent {
+public class PlayerPrePickupItemEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 
-    @Getter private int quantity;
-    @Getter private Item item;
+    @Setter @Getter private boolean cancelled;
+    @Getter private final Item item;
 
-    public PlayerPickupItemEvent(Player player, Item item, int quantity) {
+    public PlayerPrePickupItemEvent(Player player, Item item) {
         super(player);
         this.item = item;
-        this.quantity = quantity;
     }
 
     public static HandlerList getHandlerList() {

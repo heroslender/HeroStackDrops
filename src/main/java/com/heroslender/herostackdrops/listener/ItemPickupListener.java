@@ -2,6 +2,7 @@ package com.heroslender.herostackdrops.listener;
 
 import com.heroslender.herostackdrops.StackDrops;
 import com.heroslender.herostackdrops.controller.ConfigurationController;
+import com.heroslender.herostackdrops.event.PlayerPrePickupItemEvent;
 import com.heroslender.herostackdrops.nms.NMS;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -55,6 +56,12 @@ public class ItemPickupListener implements Listener {
     }
 
     private boolean performPickup(final Item item, final Inventory inventory, final Player player) {
+        val prePickupEvent = new PlayerPrePickupItemEvent(player, item);
+        Bukkit.getPluginManager().callEvent(prePickupEvent);
+        if (prePickupEvent.isCancelled()) {
+            return true;
+        }
+
         val metadata = item.getMetadata(META_KEY);
         if (metadata.isEmpty()) {
             return false;
