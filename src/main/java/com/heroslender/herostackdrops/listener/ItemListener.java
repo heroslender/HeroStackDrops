@@ -38,7 +38,7 @@ public class ItemListener implements Listener {
         while (dropsIt.hasNext()) {
             final ItemStack drop = dropsIt.next();
 
-            if (configurationController.isItemDisabled(drop)) {
+            if (drop == null || configurationController.isItemDisabled(drop)) {
                 continue;
             }
 
