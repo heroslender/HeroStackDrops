@@ -159,12 +159,20 @@ public class ConfigurationController {
     }
 
     private static class MaterialData extends org.bukkit.material.MaterialData {
+        private static final boolean HAS_MATERIAL_ID = hasMethod(MaterialData.class, "getItemTypeId");
         private final boolean ignoreData;
+        private final Material mat;
 
         public MaterialData(Material type) {
             super(type);
 
+            this.mat = type;
             this.ignoreData = type.getMaxDurability() > 0;
+        }
+
+        @Override
+        public Material getItemType() {
+            return mat;
         }
 
         @Override
@@ -172,8 +180,18 @@ public class ConfigurationController {
             if (obj instanceof org.bukkit.material.MaterialData) {
                 org.bukkit.material.MaterialData md = (org.bukkit.material.MaterialData) obj;
 
-                return (md.getItemTypeId() == getItemTypeId() && (ignoreData || md.getData() == getData()));
+                final boolean typeEquals = HAS_MATERIAL_ID ? md.getItemTypeId() == getItemTypeId() : md.getItemType() == getItemType();
+                return typeEquals && (ignoreData || md.getData() == getData());
             } else {
+                return false;
+            }
+        }
+
+        private static boolean hasMethod(Class<?> clazz, String methodName) {
+            try {
+                clazz.getDeclaredMethod(methodName);
+                return true;
+            } catch (NoSuchMethodException e) {
                 return false;
             }
         }
