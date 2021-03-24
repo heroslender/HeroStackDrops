@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.min;
+
 @RequiredArgsConstructor
 public class ConfigurationController {
     private final ConfigurationService configurationService;
@@ -34,6 +36,15 @@ public class ConfigurationController {
         method = getStackMethodFrom(config.getString("restringir-itens.method", "DESATIVADO"));
 
         items = new ArrayList<>(getItems(config.getStringList("restringir-itens.itens")));
+        if (method != StackMethod.ALL) {
+            for (int i = 0; i < min(items.size(), 10); i++) {
+                StackDrops.getInstance().getLogger().info("Loaded item " + items.get(i).getItemType().name() + ";");
+            }
+
+            if (items.size() >= 10) {
+                StackDrops.getInstance().getLogger().info("(...)");
+            }
+        }
 
         blockedWorlds = config.getStringList("mundos-bloqueados");
         if (blockedWorlds == null) {
@@ -62,7 +73,8 @@ public class ConfigurationController {
             return false;
         }
 
-        val data = itemStack.getData();
+        val data = new MaterialData(itemStack.getType());
+        data.setData((byte) itemStack.getDurability());
         boolean itemsContains = false;
         for (MaterialData materialData : items) {
             if (materialData.equals(data)) {
@@ -127,7 +139,7 @@ public class ConfigurationController {
 
         val mat = Material.matchMaterial(parts[0]);
         if (mat == null) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "O material '{}' nao existe!", parts[0]);
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "O material '" + parts[0] + "' nao existe!");
             return Optional.empty();
         }
 

@@ -47,7 +47,6 @@ public class StackDrops extends JavaPlugin {
         getServer().getPluginManager().callEvent(itemUpdateEvent);
 
         updateItemSilent(itemUpdateEvent.getEntity(), itemUpdateEvent.getHologramTextFormat(), itemUpdateEvent.getAmount());
-        updateItemSilent(item, configurationController.getItemName(), amount);
     }
 
     public void updateItemSilent(final Item item, final String itemName, final int amount) {

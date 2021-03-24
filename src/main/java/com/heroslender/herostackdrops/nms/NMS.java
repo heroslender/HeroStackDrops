@@ -31,7 +31,7 @@ public class NMS {
             itemGetNameMethod = getNMSClass("Item").getDeclaredMethod("a", itemStack);
         } catch (Exception error) {
             isNmsNameEnabled = false;
-            StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar as variaveis de pegar o nome do ItemStack em NMS", error);
+            StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar as variaveis de pegar o nome do ItemStack em NMS");
         }
     }
 
