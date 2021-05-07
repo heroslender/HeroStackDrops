@@ -28,7 +28,7 @@ import static com.heroslender.herostackdrops.config.Constants.META_KEY;
 public class ItemListener implements Listener {
     private final ConfigurationController configurationController;
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     private void onMobKill(final EntityDeathEvent e) {
         if (isWorldBlocked(e.getEntity().getWorld()))
             return;
