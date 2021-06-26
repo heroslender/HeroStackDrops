@@ -73,8 +73,12 @@ public class ConfigurationController {
             return false;
         }
 
-        val data = new MaterialData(itemStack.getType());
-        data.setData((byte) itemStack.getDurability());
+         val type = itemStack.getType();
+        val data = new MaterialData(type);
+        if (type.getData() != null) {
+            data.setData((byte) itemStack.getDurability());
+        }
+
         boolean itemsContains = false;
         for (MaterialData materialData : items) {
             if (materialData.equals(data)) {
@@ -147,7 +151,7 @@ public class ConfigurationController {
 
         if (parts.length > 1) {
             try {
-                materialData.setData(Byte.parseByte(parts[1]));
+                materialData.setData(parts[1]);
             } catch (NumberFormatException ignore) {
             }
         }
@@ -172,7 +176,7 @@ public class ConfigurationController {
 
     private static class MaterialData extends org.bukkit.material.MaterialData {
         private static final boolean HAS_MATERIAL_ID = hasMethod(MaterialData.class, "getItemTypeId");
-        private final boolean ignoreData;
+        private boolean ignoreData;
         private final Material mat;
 
         public MaterialData(Material type) {
@@ -185,6 +189,16 @@ public class ConfigurationController {
         @Override
         public Material getItemType() {
             return mat;
+        }
+
+        public void setData(String data) {
+            if (data.equals("*")) {
+                ignoreData = true;
+                return;
+            }
+
+            // Item durability is stored as a short, so we need to parse to short first and then to byte
+            setData((byte) Short.parseShort(data));
         }
 
         @Override
