@@ -61,8 +61,6 @@ public class ItemListener implements Listener {
         for (Map.Entry<ItemStack, Integer> entry : toDrop.entrySet()) {
             spawnStack(entry.getKey(), entry.getValue(), e.getEntity(), null);
         }
-
-        e.getDrops().clear();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
