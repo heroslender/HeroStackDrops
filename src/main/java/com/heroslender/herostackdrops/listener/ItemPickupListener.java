@@ -106,7 +106,7 @@ public class ItemPickupListener implements Listener {
             NMS.displayCollectItem(player, item);
 
             try {
-                player.playSound(player.getLocation(), Sound.ITEM_PICKUP, 0.5F, 10F);
+                player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5F, 10F);
             } catch (NoSuchFieldError e) {
                 try {
                     // Versoes mais recentes tem o nome do som diferente, mt viagem...

@@ -1,101 +1,97 @@
 package com.heroslender.herostackdrops.nms;
 
 import com.heroslender.herostackdrops.StackDrops;
+import lombok.val;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.protocol.game.ClientboundTakeItemEntityPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
+import org.bukkit.craftbukkit.v1_18_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_18_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_18_R1.inventory.CraftItemStack;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.logging.Level;
+import java.util.SplittableRandom;
+import java.util.UUID;
 
 /**
  * Created by Heroslender.
  */
 public class NMS {
-    private static Field handleField;
-    private static Method getItemMethod;
-    private static Method itemGetNameMethod;
-    private static boolean isNmsNameEnabled = true;
+    private static final SplittableRandom RANDOM = new SplittableRandom();
+    private static final EntityDataAccessor<ItemStack> DATA_ITEM;
 
     static {
+        EntityDataAccessor<net.minecraft.world.item.ItemStack> dataItem = null;
         try {
-            handleField = getOBCClass("inventory.CraftItemStack").getDeclaredField("handle");
-            handleField.setAccessible(true);
-
-            Class<?> itemStack = getNMSClass("ItemStack");
-            getItemMethod = itemStack.getDeclaredMethod("getItem");
-            itemGetNameMethod = getNMSClass("Item").getDeclaredMethod("a", itemStack);
-        } catch (Exception error) {
-            isNmsNameEnabled = false;
-            StackDrops.getInstance().getLogger().log(Level.SEVERE, "Ocurreu um erro ao inicializar as variaveis de pegar o nome do ItemStack em NMS");
+            for (Field field : ItemEntity.class.getDeclaredFields()) {
+                if (field.getType().equals(EntityDataAccessor.class)) {
+                    field.setAccessible(true);
+                    dataItem = (EntityDataAccessor<net.minecraft.world.item.ItemStack>) field.get(null);
+                    break;
+                }
+            }
+//            val field = ItemEntity.class.getDeclaredField("DATA_ITEM");
+//            dataItem = (EntityDataAccessor<net.minecraft.world.item.ItemStack>) field.get(null);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        DATA_ITEM = dataItem;
     }
 
     public static void registerCommand(Command command) {
-        try {
-            Object craftServer = getOBCClass("CraftServer").cast(Bukkit.getServer());
-            Object commandMap = craftServer.getClass().getMethod("getCommandMap").invoke(craftServer);
-
-            commandMap.getClass().getMethod("register", String.class, Command.class).invoke(commandMap, StackDrops.getInstance().getDescription().getName(), command);
-        } catch (Exception error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao registar o comando", error);
-        }
+        ((CraftServer) Bukkit.getServer()).getCommandMap().register(StackDrops.getInstance().getName(), command);
     }
 
     public static void displayCollectItem(final Player player, final Item item) {
         try {
-            new CollectItemAnimation(player, item);
-        } catch (Exception ignore) {
-        }
-    }
+            val id = RANDOM.nextInt(99000, 100000);
+            ClientboundAddEntityPacket packet = new ClientboundAddEntityPacket(
+                id,
+                UUID.randomUUID(),
+                item.getLocation().getX(),
+                item.getLocation().getY(),
+                item.getLocation().getZ(),
+                0F,
+                0F,
+                EntityType.ITEM,
+                0,
+                Vec3.ZERO
+            );
 
-    public static String getNome(final ItemStack itemStack) {
-        if (itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName())
-            return itemStack.getItemMeta().getDisplayName();
+            val watcher = new SynchedEntityData(null);
+            val i = item.getItemStack().clone();
+            i.setAmount(1);
+            watcher.define(DATA_ITEM, CraftItemStack.asNMSCopy(i));
 
-        if (isNmsNameEnabled) {
-            try {
-                Object handle = handleField.get(itemStack);
-                return (String) itemGetNameMethod.invoke(getItemMethod.invoke(handle), handle);
-            } catch (IllegalAccessException | InvocationTargetException error) {
-                StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar o nome do ItemStack em NMS", error);
+            ClientboundSetEntityDataPacket dataPacket = new ClientboundSetEntityDataPacket(
+                id,
+                watcher,
+                true
+            );
+
+            val playAnim = new ClientboundTakeItemEntityPacket(id, player.getEntityId(), 1);
+
+            Location loc = player.getLocation();
+            for (Player target : player.getWorld().getPlayers()) {
+                if (loc.distanceSquared(target.getLocation()) < 100) {
+                    val connection = ((CraftPlayer) target).getHandle().connection;
+                    connection.send(packet);
+                    connection.send(dataPacket);
+                    connection.send(playAnim);
+                }
             }
-        }
-
-        return itemStack.getType().name().replace('_', ' ').toLowerCase();
-    }
-
-    static void sendPacket(final Player player, final Object packet) {
-        try {
-            Object handle = player.getClass().getMethod("getHandle").invoke(player);
-            Object playerConnection = handle.getClass().getField("playerConnection").get(handle);
-            playerConnection.getClass().getMethod("sendPacket", getNMSClass("Packet")).invoke(playerConnection, packet);
-        } catch (Exception error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao tacar o packet no player", error);
-        }
-    }
-
-    static Class<?> getOBCClass(final String name) {
-        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-        try {
-            return Class.forName("org.bukkit.craftbukkit." + version + "." + name);
-        } catch (ClassNotFoundException error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar a classe '" + name + "' do CraftBukkit", error);
-            return null;
-        }
-    }
-
-    static Class<?> getNMSClass(final String name) {
-        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-        try {
-            return Class.forName("net.minecraft.server." + version + "." + name);
-        } catch (ClassNotFoundException error) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "Ocurreu um erro ao pegar a classe '" + name + "' do NMS", error);
-            return null;
+        } catch (Exception ignore) {
         }
     }
 }

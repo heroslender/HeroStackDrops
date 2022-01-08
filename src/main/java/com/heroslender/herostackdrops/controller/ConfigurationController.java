@@ -11,7 +11,6 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -23,13 +22,20 @@ import static java.lang.Math.min;
 public class ConfigurationController {
     private final ConfigurationService configurationService;
 
-    @Getter private StackMethod method;
-    @Getter private List<MaterialData> items;
-    @Getter private List<String> blockedWorlds;
-    @Getter private String itemName;
-    @Getter private double stackRadius;
-    @Getter private boolean stackOnSpawn;
-    @Getter private boolean showAnimation;
+    @Getter
+    private StackMethod method;
+    @Getter
+    private List<Material> items;
+    @Getter
+    private List<String> blockedWorlds;
+    @Getter
+    private String itemName;
+    @Getter
+    private double stackRadius;
+    @Getter
+    private boolean stackOnSpawn;
+    @Getter
+    private boolean showAnimation;
 
     public void init() {
         val config = configurationService.getConfig();
@@ -38,7 +44,7 @@ public class ConfigurationController {
         items = new ArrayList<>(getItems(config.getStringList("restringir-itens.itens")));
         if (method != StackMethod.ALL) {
             for (int i = 0; i < min(items.size(), 10); i++) {
-                StackDrops.getInstance().getLogger().info("Loaded item " + items.get(i).getItemType().name() + ";");
+                StackDrops.getInstance().getLogger().info("Loaded item " + items.get(i).name() + ";");
             }
 
             if (items.size() >= 10) {
@@ -47,13 +53,10 @@ public class ConfigurationController {
         }
 
         blockedWorlds = config.getStringList("mundos-bloqueados");
-        if (blockedWorlds == null) {
-            blockedWorlds = Collections.emptyList();
-        }
 
         itemName = config.getBoolean("holograma.ativado", true)
-                ? config.getString("holograma.texto", "&7{quantidade}x &e{nome}").replace('&', '§')
-                : null;
+            ? config.getString("holograma.texto", "&7{quantidade}x &e{nome}").replace('&', '§')
+            : null;
 
         stackOnSpawn = config.getBoolean("stack-on-spawn", false);
         stackRadius = config.getDouble("raio-de-stack", 5D);
@@ -73,15 +76,11 @@ public class ConfigurationController {
             return false;
         }
 
-         val type = itemStack.getType();
-        val data = new MaterialData(type);
-        if (type.getData() != null) {
-            data.setData((byte) itemStack.getDurability());
-        }
+        val type = itemStack.getType();
 
         boolean itemsContains = false;
-        for (MaterialData materialData : items) {
-            if (materialData.equals(data)) {
+        for (Material material : items) {
+            if (material == type) {
                 itemsContains = true;
                 break;
             }
@@ -105,30 +104,27 @@ public class ConfigurationController {
      * @return The method
      */
     private StackMethod getStackMethodFrom(final String method) {
-        switch (method.toLowerCase()) {
-            case "whitelist":
-                return StackMethod.WHITELIST;
-            case "blacklist":
-                return StackMethod.BLACKLIST;
-            default:
-                return StackMethod.ALL;
-        }
+        return switch (method.toLowerCase()) {
+            case "whitelist" -> StackMethod.WHITELIST;
+            case "blacklist" -> StackMethod.BLACKLIST;
+            default -> StackMethod.ALL;
+        };
     }
 
     /**
      * Parse a list of strings containing material names and data
-     * to a list of {@link MaterialData}.
+     * to a list of {@link Material}.
      *
      * @param items list of material names and data, separated by ":"
-     * @return {@link List} of {@link MaterialData} containing all
+     * @return {@link List} of {@link Material} containing all
      * items parsed.
      */
-    private List<MaterialData> getItems(final List<String> items) {
+    private List<Material> getItems(final List<String> items) {
         return items.stream()
-                .map(this::getMaterialDataFor)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+            .map(this::getMaterialDataFor)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -136,27 +132,17 @@ public class ConfigurationController {
      * Ex: "STONE:2"
      *
      * @param source String to parse
-     * @return {@link Optional} containing the {@link MaterialData} if valid.
+     * @return {@link Optional} containing the {@link Material} if valid.
      */
-    private Optional<MaterialData> getMaterialDataFor(final String source) {
-        val parts = source.split(":");
-
-        val mat = Material.matchMaterial(parts[0]);
+    private Optional<Material> getMaterialDataFor(final String source) {
+        val matName = source.split(":")[0];
+        val mat = Material.matchMaterial(matName);
         if (mat == null) {
-            StackDrops.getInstance().getLogger().log(Level.WARNING, "O material '" + parts[0] + "' nao existe!");
+            StackDrops.getInstance().getLogger().log(Level.WARNING, "O material '" + matName + "' nao existe!");
             return Optional.empty();
         }
 
-        val materialData = new MaterialData(mat);
-
-        if (parts.length > 1) {
-            try {
-                materialData.setData(parts[1]);
-            } catch (NumberFormatException ignore) {
-            }
-        }
-
-        return Optional.of(materialData);
+        return Optional.of(mat);
     }
 
     public enum StackMethod {
@@ -173,54 +159,4 @@ public class ConfigurationController {
          */
         ALL
     }
-
-    private static class MaterialData extends org.bukkit.material.MaterialData {
-        private static final boolean HAS_MATERIAL_ID = hasMethod(MaterialData.class, "getItemTypeId");
-        private boolean ignoreData;
-        private final Material mat;
-
-        public MaterialData(Material type) {
-            super(type);
-
-            this.mat = type;
-            this.ignoreData = type.getMaxDurability() > 0;
-        }
-
-        @Override
-        public Material getItemType() {
-            return mat;
-        }
-
-        public void setData(String data) {
-            if (data.equals("*")) {
-                ignoreData = true;
-                return;
-            }
-
-            // Item durability is stored as a short, so we need to parse to short first and then to byte
-            setData((byte) Short.parseShort(data));
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof org.bukkit.material.MaterialData) {
-                org.bukkit.material.MaterialData md = (org.bukkit.material.MaterialData) obj;
-
-                final boolean typeEquals = HAS_MATERIAL_ID ? md.getItemTypeId() == getItemTypeId() : md.getItemType() == getItemType();
-                return typeEquals && (ignoreData || md.getData() == getData());
-            } else {
-                return false;
-            }
-        }
-
-        private static boolean hasMethod(Class<?> clazz, String methodName) {
-            try {
-                clazz.getDeclaredMethod(methodName);
-                return true;
-            } catch (NoSuchMethodException e) {
-                return false;
-            }
-        }
-    }
-
 }
