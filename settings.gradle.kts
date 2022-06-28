@@ -10,9 +10,9 @@
 
 rootProject.name = "HeroStackDrops"
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven("https://papermc.io/repo/repository/maven-releases/")
-    }
-}
+include(
+    "core",
+    "nms",
+    ":nms:v1_8_R3",
+    ":nms:v1_18_R2",
+)

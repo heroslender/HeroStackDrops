@@ -82,10 +82,11 @@ public class ItemListener implements Listener {
 
         if (configurationController.isStackOnSpawn()) {
             for (Entity entity : configurationController.getNearby(source)) {
-                if (!(entity instanceof Item targetItem)) {
+                if (!(entity instanceof Item)) {
                     continue;
                 }
 
+                final Item targetItem = (Item) entity;
                 if (configurationController.isSimilar(itemStack, targetItem.getItemStack())) {
                     val metadata = targetItem.getMetadata(META_KEY);
                     if (!metadata.isEmpty()) {

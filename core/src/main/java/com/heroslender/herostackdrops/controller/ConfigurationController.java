@@ -2,6 +2,7 @@ package com.heroslender.herostackdrops.controller;
 
 import com.heroslender.herostackdrops.StackDrops;
 import com.heroslender.herostackdrops.services.ConfigurationService;
+import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -25,7 +27,7 @@ public class ConfigurationController {
     @Getter
     private StackMethod method;
     @Getter
-    private List<Material> items;
+    private List<ConfigItem> items;
     @Getter
     private List<String> blockedWorlds;
     @Getter
@@ -44,7 +46,7 @@ public class ConfigurationController {
         items = new ArrayList<>(getItems(config.getStringList("restringir-itens.itens")));
         if (method != StackMethod.ALL) {
             for (int i = 0; i < min(items.size(), 10); i++) {
-                StackDrops.getInstance().getLogger().info("Loaded item " + items.get(i).name() + ";");
+                StackDrops.getInstance().getLogger().info("Loaded item " + items.get(i).getMaterial().name() + ";");
             }
 
             if (items.size() >= 10) {
@@ -79,8 +81,8 @@ public class ConfigurationController {
         val type = itemStack.getType();
 
         boolean itemsContains = false;
-        for (Material material : items) {
-            if (material == type) {
+        for (ConfigItem item : items) {
+            if (item.isSame(type, itemStack)) {
                 itemsContains = true;
                 break;
             }
@@ -104,11 +106,14 @@ public class ConfigurationController {
      * @return The method
      */
     private StackMethod getStackMethodFrom(final String method) {
-        return switch (method.toLowerCase()) {
-            case "whitelist" -> StackMethod.WHITELIST;
-            case "blacklist" -> StackMethod.BLACKLIST;
-            default -> StackMethod.ALL;
-        };
+        final String methodName = method.toLowerCase(Locale.ROOT);
+        if (methodName.equals("whitelist")) {
+            return StackMethod.WHITELIST;
+        } else if (methodName.equals("blacklist")) {
+            return StackMethod.BLACKLIST;
+        } else {
+            return StackMethod.ALL;
+        }
     }
 
     /**
@@ -119,7 +124,7 @@ public class ConfigurationController {
      * @return {@link List} of {@link Material} containing all
      * items parsed.
      */
-    private List<Material> getItems(final List<String> items) {
+    private List<ConfigItem> getItems(final List<String> items) {
         return items.stream()
             .map(this::getMaterialDataFor)
             .filter(Optional::isPresent)
@@ -134,16 +139,47 @@ public class ConfigurationController {
      * @param source String to parse
      * @return {@link Optional} containing the {@link Material} if valid.
      */
-    private Optional<Material> getMaterialDataFor(final String source) {
-        val matName = source.split(":")[0];
+    private Optional<ConfigItem> getMaterialDataFor(final String source) {
+        String[] split = source.split(":");
+        val matName = split[0];
         val mat = Material.matchMaterial(matName);
         if (mat == null) {
             StackDrops.getInstance().getLogger().log(Level.WARNING, "O material '" + matName + "' nao existe!");
             return Optional.empty();
         }
 
-        return Optional.of(mat);
+        short data = -1;
+        if (split.length > 1) {
+            try {
+                data = Short.parseShort(split[1]);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        return Optional.of(new ConfigItem(mat, data));
     }
+
+    @Data
+    private static final class ConfigItem {
+        @NotNull
+        private final Material material;
+
+        private final short data;
+
+        private boolean isSame(@NotNull final Material itemMaterial, @NotNull final ItemStack itemStack) {
+            if (material != itemMaterial) {
+                return false;
+            }
+
+            if (data == -1) {
+                // Ignore data, so it is the same
+                return true;
+            }
+
+            return data == itemStack.getDurability();
+        }
+    }
+
 
     public enum StackMethod {
         /**

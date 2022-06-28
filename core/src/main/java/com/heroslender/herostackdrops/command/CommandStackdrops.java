@@ -4,19 +4,16 @@ import com.heroslender.herostackdrops.StackDrops;
 import lombok.val;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;
 
-public class CommandStackdrops extends Command {
-    public CommandStackdrops() {
-        super("herostackdrops");
-        setAliases(Collections.singletonList("stackdrops"));
-    }
+public class CommandStackdrops implements CommandExecutor {
 
     @Override
-    public boolean execute(CommandSender sender, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (sender.hasPermission("herostackdrops.admin") || sender.getName().equals("Heroslender")) {
             if (args.length <= 0) {
                 sender.sendMessage("§b[HeroStackDrops] §e" + StackDrops.getInstance().getDescription().getFullName());

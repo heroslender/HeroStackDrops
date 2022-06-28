@@ -6,13 +6,14 @@ import com.heroslender.herostackdrops.controller.ConfigurationController;
 import com.heroslender.herostackdrops.event.ItemUpdateEvent;
 import com.heroslender.herostackdrops.listener.ItemListener;
 import com.heroslender.herostackdrops.listener.ItemPickupListener;
-import com.heroslender.herostackdrops.nms.NMS;
+import com.heroslender.herostackdrops.nms.NmsFacade;
 import com.heroslender.herostackdrops.services.ConfigurationService;
 import com.heroslender.herostackdrops.services.ConfigurationServiceImpl;
+import com.heroslender.herostackdrops.version.NMSVersion;
 import lombok.Getter;
-import lombok.val;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -25,9 +26,21 @@ public class StackDrops extends JavaPlugin {
     @Getter
     private final ConfigurationController configurationController;
 
+    @Getter
+    private final NmsFacade nmsFacade;
+
     public StackDrops() {
         instance = this;
         saveDefaultConfig();
+
+        NMSVersion currentVersion = NMSVersion.CURRENT;
+        if (NMSVersion.V1_8_R3.equals(currentVersion)) {
+            nmsFacade = new com.heroslender.herostackdrops.nms.v1_8_R3.NmsFacadeImpl();
+        } else if (NMSVersion.V1_18_R2.equals(currentVersion)) {
+            nmsFacade = new com.heroslender.herostackdrops.nms.v1_18_R2.NmsFacadeImpl();
+        } else {
+            nmsFacade = null;
+        }
 
         ConfigurationService configurationService = new ConfigurationServiceImpl(this);
         this.configurationController = new ConfigurationController(configurationService);
@@ -37,10 +50,10 @@ public class StackDrops extends JavaPlugin {
     public void onEnable() {
         configurationController.init();
 
-        NMS.registerCommand(new CommandStackdrops());
+        getServer().getPluginCommand("herostackdrops").setExecutor(new CommandStackdrops());
 
         getServer().getPluginManager().registerEvents(new ItemListener(configurationController), this);
-        getServer().getPluginManager().registerEvents(new ItemPickupListener(configurationController), this);
+        getServer().getPluginManager().registerEvents(new ItemPickupListener(this, configurationController), this);
 
         // https://bstats.org/plugin/bukkit/HeroStackDrops
         new Metrics(this, 5041);
@@ -68,24 +81,34 @@ public class StackDrops extends JavaPlugin {
     }
 
     private String getName(final ItemStack itemStack) {
-        var name = itemStack.getI18NDisplayName();
-        if (name != null) {
-            return name;
+        if (itemStack.hasItemMeta()) {
+            ItemMeta meta = itemStack.getItemMeta();
+
+            if (meta.hasDisplayName()) {
+                return meta.getDisplayName();
+            }
         }
 
-        val nameBuilder = new StringBuilder();
-        name = itemStack.getType().name();
-        var prevIndex = 0;
-        var index = 0;
+        if (nmsFacade != null) {
+            final String name = nmsFacade.getI18nDisplayName(itemStack);
+            if (name != null) {
+                return name;
+            }
+        }
+
+        final StringBuilder nameBuilder = new StringBuilder();
+        final String name = itemStack.getType().name();
+        int prevIndex = 0;
+        int index = 0;
         while ((index = name.indexOf(' ', index)) != -1) {
-            val text = name.substring(prevIndex + 1, index);
+            final String text = name.substring(prevIndex + 1, index);
             nameBuilder.append(Character.toUpperCase(text.charAt(0)));
             nameBuilder.append(text.substring(1));
             nameBuilder.append(' ');
 
             prevIndex = index;
         }
-        val text = name.substring(prevIndex + 1);
+        final String text = name.substring(prevIndex + 1);
         nameBuilder.append(Character.toUpperCase(text.charAt(0)));
         nameBuilder.append(text.substring(1));
 
