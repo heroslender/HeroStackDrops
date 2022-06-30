@@ -16,7 +16,6 @@ allprojects {
 
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         maven("https://hub.spigotmc.org/nexus/content/repositories/sonatype-nexus-snapshots/")
-        maven("https://nexus.heroslender.com/repository/maven-public/")
     }
 
     dependencies {
