@@ -3,10 +3,10 @@ plugins {
     `java-library`
 }
 
-group = "com.heroslender"
-version = "1.11.0"
-
 allprojects {
+    group = "com.heroslender"
+    version = "1.11.0"
+
     apply {
         plugin("org.gradle.java")
     }

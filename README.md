@@ -3,6 +3,8 @@
 # HeroStackDrops
 
 [![GitHub stars](https://img.shields.io/github/stars/heroslender/HeroStackDrops.svg)](https://github.com/heroslender/HeroStackDrops/stargazers)
+[![bStats Servers](https://img.shields.io/bstats/servers/5041.svg?color=1bcc1b)](https://bstats.org/plugin/bukkit/HeroStackDrops/5041)
+[![bStats Servers](https://img.shields.io/bstats/players/5041.svg?color=1bcc1b)](https://bstats.org/plugin/bukkit/HeroStackDrops/5041)
 [![GitHub All Releases](https://img.shields.io/github/downloads/heroslender/HeroStackDrops/total.svg?logoColor=fff)](https://github.com/heroslender/HeroStackDrops/releases/latest)
 [![GitHub issues](https://img.shields.io/github/issues-raw/heroslender/HeroStackDrops.svg?label=issues)](https://github.com/heroslender/HeroStackDrops/issues)
 [![GitHub last commit](https://img.shields.io/github/last-commit/heroslender/HeroStackDrops.svg)](https://github.com/heroslender/HeroStackDrops/commit)
@@ -45,8 +47,8 @@ raio-de-stack: 5
 
 <dependency>
   <groupId>com.heroslender</groupId>
-  <artifactId>HeroStackDrops</artifactId>
-  <version>1.8.2</version>
+  <artifactId>StackDrops</artifactId>
+  <version>1.11.0</version>
 </dependency>
 ```
 
