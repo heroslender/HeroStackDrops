@@ -95,9 +95,8 @@ public class ItemPickupListener implements Listener {
     }
 
     private int addItemToInv(final ItemStack itemStack, int amount, final Inventory inventory) {
-        itemStack.setAmount(amount);
-
         int maxStackSize = itemStack.getMaxStackSize();
+
         Map<Integer, ItemStack> result;
         do {
             int stackSize = min(maxStackSize, amount);
@@ -107,10 +106,10 @@ public class ItemPickupListener implements Listener {
         } while (result.isEmpty() && amount > 0);
 
         if (!result.isEmpty()) {
-            return result.values().iterator().next().getAmount();
+            return amount + result.values().iterator().next().getAmount();
         }
 
-        return 0;
+        return amount;
     }
 
     private void collectItem(final Player player, final Item item) {
