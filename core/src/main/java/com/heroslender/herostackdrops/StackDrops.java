@@ -17,6 +17,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Locale;
+
 /**
  * Created by Heroslender.
  */
@@ -97,18 +99,18 @@ public class StackDrops extends JavaPlugin {
         }
 
         final StringBuilder nameBuilder = new StringBuilder();
-        final String name = itemStack.getType().name();
+        final String name = itemStack.getType().name().toLowerCase(Locale.ROOT);
         int prevIndex = 0;
         int index = 0;
-        while ((index = name.indexOf(' ', index)) != -1) {
-            final String text = name.substring(prevIndex + 1, index);
+        while ((index = name.indexOf('_', index + 1)) != -1) {
+            final String text = name.substring(prevIndex, index);
             nameBuilder.append(Character.toUpperCase(text.charAt(0)));
             nameBuilder.append(text.substring(1));
             nameBuilder.append(' ');
 
-            prevIndex = index;
+            prevIndex = index + 1;
         }
-        final String text = name.substring(prevIndex + 1);
+        final String text = name.substring(prevIndex);
         nameBuilder.append(Character.toUpperCase(text.charAt(0)));
         nameBuilder.append(text.substring(1));
 
