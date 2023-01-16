@@ -1,10 +1,11 @@
 name: Deploy to Nexus repository
 on:
-    workflow_run:
-        workflows: [ "Build" ]
-        branches: [ main ]
-        types:
-            - completed
+  workflow_dispatch:
+  workflow_run:
+    workflows: [ "Build" ]
+    branches: [ main ]
+    types:
+      - completed
 
 jobs:
     deploy:
