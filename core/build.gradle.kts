@@ -8,7 +8,7 @@ plugins {
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
 
-    api(project(":nms"))
+    implementation(project(":nms"))
     implementation(project(":nms:v1_8_R3"))
     implementation(project(":nms:v1_18_R2"))
 }
