@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class ConfigurationController {
     private final ConfigurationService configurationService;
 
     @Getter
-    private StackMethod method;
+    private FilterType method;
     @Getter
     private List<ConfigItem> items;
     @Getter
@@ -39,12 +40,23 @@ public class ConfigurationController {
     @Getter
     private boolean showAnimation;
 
+    @Getter
+    private FilterType filterMobs;
+    @Getter
+    private List<EntityType> mobsToFilter;
+
     public void init() {
         val config = configurationService.getConfig();
-        method = getStackMethodFrom(config.getString("restringir-itens.method", "DESATIVADO"));
+        String methodMigration = config.getString("restringir-itens.method");
+        if (methodMigration != null) {
+            config.set("restringir-itens.metodo", methodMigration);
+            config.set("restringir-itens.method", null);
+        }
+
+        method = FilterType.from(config.getString("restringir-itens.metodo", "DESATIVADO"));
 
         items = new ArrayList<>(getItems(config.getStringList("restringir-itens.itens")));
-        if (method != StackMethod.ALL) {
+        if (method != FilterType.DISABLED) {
             for (int i = 0; i < min(items.size(), 10); i++) {
                 StackDrops.getInstance().getLogger().info("Loaded item " + items.get(i).getMaterial().name() + ";");
             }
@@ -64,6 +76,16 @@ public class ConfigurationController {
         stackRadius = config.getDouble("raio-de-stack", 5D);
 
         showAnimation = config.getBoolean("animacao", true);
+
+        filterMobs = FilterType.from(config.getString("filtrar-mobs.metodo", "DESATIVADO"));
+        mobsToFilter = new ArrayList<>();
+        for (String mob : config.getStringList("filtrar-mobs.filtro")) {
+            try {
+                EntityType.valueOf(mob.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                StackDrops.getInstance().getLogger().log(Level.WARNING, "Invalid mob type: {}", mob);
+            }
+        }
     }
 
     /**
@@ -74,7 +96,7 @@ public class ConfigurationController {
      * {@code false} otherwise.
      */
     public boolean isItemDisabled(@NotNull final ItemStack itemStack) {
-        if (method == StackMethod.ALL) {
+        if (method == FilterType.DISABLED) {
             return false;
         }
 
@@ -88,7 +110,30 @@ public class ConfigurationController {
             }
         }
 
-        return (method != StackMethod.BLACKLIST || itemsContains) && (method != StackMethod.WHITELIST || !itemsContains);
+        return (method != FilterType.BLACKLIST || itemsContains) && (method != FilterType.WHITELIST || !itemsContains);
+    }
+
+    /**
+     * Are the mob drops allowed to be stacked
+     *
+     * @param entityType Mob to check
+     * @return {@code true} if the mob drops are allowed to stack,
+     * {@code false} otherwise.
+     */
+    public boolean isMobDisabled(@NotNull final EntityType entityType) {
+        if (method == FilterType.DISABLED) {
+            return false;
+        }
+
+        boolean mobsContains = false;
+        for (EntityType type : mobsToFilter) {
+            if (type == entityType) {
+                mobsContains = true;
+                break;
+            }
+        }
+
+        return (method != FilterType.BLACKLIST || mobsContains) && (method != FilterType.WHITELIST || !mobsContains);
     }
 
     public List<Entity> getNearby(final Entity source) {
@@ -97,23 +142,6 @@ public class ConfigurationController {
 
     public boolean isSimilar(@NotNull final ItemStack source, @NotNull final ItemStack other) {
         return source.isSimilar(other);
-    }
-
-    /**
-     * Get the {@link StackMethod} for the given string
-     *
-     * @param method The string to read the method
-     * @return The method
-     */
-    private StackMethod getStackMethodFrom(final String method) {
-        final String methodName = method.toLowerCase(Locale.ROOT);
-        if (methodName.equals("whitelist")) {
-            return StackMethod.WHITELIST;
-        } else if (methodName.equals("blacklist")) {
-            return StackMethod.BLACKLIST;
-        } else {
-            return StackMethod.ALL;
-        }
     }
 
     /**
@@ -159,6 +187,38 @@ public class ConfigurationController {
         return Optional.of(new ConfigItem(mat, data));
     }
 
+    public enum FilterType {
+        /**
+         * Only the items listed will stack.
+         */
+        WHITELIST,
+        /**
+         * All items will stack, but the items listed won't.
+         */
+        BLACKLIST,
+        /**
+         * All items will stack, regardless of the items list
+         */
+        DISABLED;
+
+        /**
+         * Get the {@link FilterType} for the given string
+         *
+         * @param method The string to read the method
+         * @return The method
+         */
+        public static FilterType from(final String method) {
+            final String methodName = method.toLowerCase(Locale.ROOT);
+            if (methodName.equals("whitelist")) {
+                return FilterType.WHITELIST;
+            } else if (methodName.equals("blacklist")) {
+                return FilterType.BLACKLIST;
+            } else {
+                return FilterType.DISABLED;
+            }
+        }
+    }
+
     @Data
     private static final class ConfigItem {
         @NotNull
@@ -178,21 +238,5 @@ public class ConfigurationController {
 
             return data == itemStack.getDurability();
         }
-    }
-
-
-    public enum StackMethod {
-        /**
-         * Only the items listed will stack.
-         */
-        WHITELIST,
-        /**
-         * All items will stack, but the items listed won't.
-         */
-        BLACKLIST,
-        /**
-         * All items will stack, regardless of the items list
-         */
-        ALL
     }
 }

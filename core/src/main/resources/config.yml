@@ -29,16 +29,20 @@
 # |
 # #==========================================================================
 restringir-itens:
-  method: 'WHITELIST'
-  itens:
-    - 'INK_SACK'
-    - 'COAL'
-    - 'COBBLESTONE'
-    - 'REDSTONE'
+    metodo: 'WHITELIST'
+    itens:
+        - 'INK_SACK'
+        - 'COAL'
+        - 'COBBLESTONE'
+        - 'REDSTONE'
 mundos-bloqueados:
-  - 'seu_mundo_bloqueado'
+    - 'seu_mundo_bloqueado'
 holograma:
-  ativado: true
-  texto: '&7{quantidade}x &e{nome}'
+    ativado: true
+    texto: '&7{quantidade}x &e{nome}'
 stack-on-spawn: false
 raio-de-stack: 5
+filtrar-mobs:
+    metodo: DESATIVADO
+    filtro:
+        - player

@@ -30,7 +30,8 @@ public class ItemListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     private void onMobKill(final EntityDeathEvent e) {
-        if (isWorldBlocked(e.getEntity().getWorld()))
+        if (isWorldBlocked(e.getEntity().getWorld())
+            || configurationController.isMobDisabled(e.getEntityType()))
             return;
 
         Map<ItemStack, Integer> toDrop = Maps.newHashMap();
@@ -75,7 +76,6 @@ public class ItemListener implements Listener {
 
         e.setCancelled(cancelEvent == StackResult.STACKED);
     }
-
 
     private StackResult spawnStack(ItemStack itemStack, int itemAmount, Entity source, @Nullable Item item) {
         if (configurationController.isItemDisabled(itemStack)) return StackResult.DISABLED;

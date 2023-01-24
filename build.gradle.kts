@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
     group = "com.heroslender"
-    version = "1.11.2"
+    version = "1.12.1"
 
     apply {
         plugin("org.gradle.java")

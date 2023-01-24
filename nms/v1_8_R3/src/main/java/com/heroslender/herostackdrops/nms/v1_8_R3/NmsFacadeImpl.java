@@ -61,15 +61,17 @@ public class NmsFacadeImpl implements NmsFacade {
     public void sendItemPickupAnimation(@NotNull Player player, @NotNull Item item) {
         try {
             Location loc = item.getLocation();
+            ItemStack stack = item.getItemStack();
+            stack.setAmount(1);
             EntityItem entity = new EntityItem(
                 ((CraftWorld) item.getWorld()).getHandle(),
                 loc.getX(),
                 loc.getY(),
                 loc.getZ(),
-                CraftItemStack.asNMSCopy(item.getItemStack())
+                CraftItemStack.asNMSCopy(stack)
             );
 
-            PacketPlayOutSpawnEntity spawnPacket = new PacketPlayOutSpawnEntity(entity, 2, 100);
+            PacketPlayOutSpawnEntity spawnPacket = new PacketPlayOutSpawnEntity(entity, 2);
             PacketPlayOutEntityMetadata metadataPacket = new PacketPlayOutEntityMetadata(entity.getId(), entity.getDataWatcher(), true);
             PacketPlayOutCollect collectPacket = new PacketPlayOutCollect(entity.getId(), player.getEntityId());
 
